@@ -73,6 +73,7 @@ Yunba = (function () {
         init_callback = init_callback || function () {
         };
         rec_callback=rec_callback||function(){};
+        me.receive_msg_cb_list={};
         try {
             console.log('js client start init...');
             me.socket = io.connect('http://' + this.server + ':' + this.port);
@@ -121,8 +122,10 @@ Yunba = (function () {
                         me.suback_cb(true);
                     if (me.socket.listeners('message').length === 0) {
                         me.socket.on('message', function (data) {
-                            if (me.callback2)
-                                me.callback2(data);
+                            if(me.receive_msg_cb_list[data.topic])
+                                me.receive_msg_cb_list[data.topic](data);
+//                            if (me.receive_msg_cb)
+//                                me.receive_msg_cb(data);
                         });
                     }
                 } else {
@@ -133,6 +136,7 @@ Yunba = (function () {
             });
 
             me.socket.on('unsuback', function (result) {
+                console.log(result);
                 if (result.success) {
                     SUB_CHANNEL_LIST.remove(channel);
                     if (me.unsuback_cb)
@@ -198,8 +202,6 @@ Yunba = (function () {
         var qos = args['qos'] || QOS1;
         this.suback_cb = args['callback'] || cb1 || function () {
         };
-        this.callback2 = cb2 || function () {
-        };
 
         if (!this.connected) {
             return __error(MSG_NEED_CONNECT) && this.suback_cb(false, MSG_NEED_CONNECT);
@@ -207,6 +209,8 @@ Yunba = (function () {
 
         if (!this.suback_cb) return __error(MSG_MISSINGl_CALLBACK);
         if (!channel)  return __error(MSG_MISSING_CHANNEL) && this.suback_cb(false, MSG_MISSING_CHANNEL);
+
+        this.receive_msg_cb_list[channel] = cb2 || function () {};
 
         //检查是否已经订阅该频道
         if (SUB_CHANNEL_LIST.contain(channel)) {
