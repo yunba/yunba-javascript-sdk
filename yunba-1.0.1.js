@@ -29,6 +29,8 @@ var __error = function (msg) {
     return true;
 }
 
+var noop = function(){}
+
 Array.prototype.contain = function (val) {
     for (var i = 0; i < this.length; i++) {
         if (this[i] == val) {
@@ -159,6 +161,26 @@ Yunba = (function () {
                 }
             });
 
+            me.socket.on('set_alias_ack',function(result){
+                if(result.success){
+                    if(me.set_alias_cb){
+                        me.set_alias_cb();
+                    }
+                }
+            });
+
+            me.socket.on('alias',function(result){
+                me.get_alias_cb(result);
+            });
+
+            me.socket.on('here_now_ack',function(result){
+                me.here_now_cb(result);
+            });
+
+            me.socket.on('where_now_ack',function(result){
+                me.where_now_cb(result);
+            });
+
         } catch (err) {
             return __error(MSG_CONNECT_FAIL) && init_callback(false, MSG_CONNECT_FAIL);
         }
@@ -281,6 +303,72 @@ Yunba = (function () {
         } catch (err) {
             return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
         }
+    };
+
+    Yunba.prototype.setAlias = function (alias,callback) {
+        var me = this;
+
+
+
+        if(me.socket_connected === false){
+            return false;
+        }
+
+        if (!me.connected) {
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+        }
+
+        var cb = callback || noop;
+
+        console.log('[JS SDK]setAlias...');
+        me.set_alias_cb = cb;
+        me.socket.emit('set_alias',{alias:alias});
+    };
+
+    Yunba.prototype.getAlias = function (callback) {
+        var me = this;
+
+        if(me.socket_connected === false){
+            return false;
+        }
+
+        if (!me.connected) {
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+        }
+
+        cb = callback || noop;
+        me.get_alias_cb=cb;
+        me.socket.emit('get_alias',{});
+    };
+
+    Yunba.prototype.hereNow = function (topic,cb) {
+        var me = this;
+
+        if(me.socket_connected === false){
+            return false;
+        }
+        if (!me.connected) {
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+        }
+
+        cb = cb || noop;
+        me.here_now_cb = cb;
+        me.socket.emit('here_now',{topic:topic});
+    };
+
+    Yunba.prototype.whereNow = function (alias,cb) {
+        var me = this;
+
+        if(me.socket_connected === false){
+            return false;
+        }
+        if (!me.connected) {
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+        }
+
+        cb = cb || noop;
+        me.where_now_cb = cb;
+        me.socket.emit('where_now',{alias:alias});
     };
 
     return Yunba;
