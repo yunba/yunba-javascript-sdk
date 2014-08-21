@@ -72,8 +72,12 @@ Yunba = (function () {
         var me = this;
         init_callback = init_callback || function () {
         };
-        rec_callback=rec_callback||function(){};
-        me.receive_msg_cb_list={};
+        rec_callback = rec_callback || function(){};
+        me.message_cb = function() {};
+//        me.receive_msg_cb_list = {};
+        me.get_alias_cb = function() {};
+        me.set_alias_cb = function() {};
+
         try {
             console.log('js client start init...');
             me.socket = io.connect('http://' + this.server + ':' + this.port);
@@ -115,19 +119,23 @@ Yunba = (function () {
                 }
             });
 
+            me.socket.on('message', function (data) {
+                me.message_cb(data);
+            });
+
+            me.socket.on('alias', function(data) {
+                me.get_alias_cb(data);
+            })
+
+            me.socket.on('set_alias_ack', function(data) {
+                me.set_alias_cb(data);
+            })
+
             me.socket.on('suback', function (data) {
                 if (data.success) {
                     //如果订阅成功，则监听来自服务端的message消息
                     if (me.suback_cb)
                         me.suback_cb(true);
-                    if (me.socket.listeners('message').length === 0) {
-                        me.socket.on('message', function (data) {
-                            if(me.receive_msg_cb_list[data.topic])
-                                me.receive_msg_cb_list[data.topic](data);
-//                            if (me.receive_msg_cb)
-//                                me.receive_msg_cb(data);
-                        });
-                    }
                 } else {
                     if (me.suback_cb)
                         me.suback_cb(false, MSG_SUB_FAIL)
@@ -210,13 +218,12 @@ Yunba = (function () {
         if (!this.suback_cb) return __error(MSG_MISSINGl_CALLBACK);
         if (!channel)  return __error(MSG_MISSING_CHANNEL) && this.suback_cb(false, MSG_MISSING_CHANNEL);
 
-        this.receive_msg_cb_list[channel] = cb2 || function () {};
-
         //检查是否已经订阅该频道
         if (SUB_CHANNEL_LIST.contain(channel)) {
-            return __error(MSG_SUB_REPEAT_ERROR) && this.suback_cb(false, MSG_SUB_REPEAT_ERROR);
+//            return __error(MSG_SUB_REPEAT_ERROR) && this.suback_cb(false, MSG_SUB_REPEAT_ERROR);
+        } else {
+            SUB_CHANNEL_LIST.push(channel);
         }
-        SUB_CHANNEL_LIST.push(channel);
 
         try {
             this.socket.emit('subscribe', { 'topic': channel, 'qos': qos });
@@ -267,7 +274,7 @@ Yunba = (function () {
 
         this.puback_cb = callback;
 
-        var channel = args['topic'];
+        var channel = args['topic'] || args['channel'];
         var msg = args['msg'];
         var qos = args['qos'] || QOS1;
         var callback = args['callback'] || callback || function () {
@@ -282,6 +289,20 @@ Yunba = (function () {
             return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
         }
     };
+
+    Yunba.prototype.publish_to_alias = function (args, callback) {
+        this.socket.emit('publish_to_alias', args, callback);
+    };
+
+    Yunba.prototype.set_alias = function (args, callback) {
+        this.set_alias_cb = callback;
+        this.socket.emit('set_alias', args);
+    }
+
+    Yunba.prototype.get_alias = function (callback) {
+        this.get_alias_cb = callback;
+        this.socket.emit('get_alias');
+    }
 
     return Yunba;
 
