@@ -198,6 +198,10 @@ Yunba = (function () {
         }
     };
 
+    Yunba.prototype.set_message_cb = function (cb) {
+        this.message_cb = cb;
+    }
+
     Yunba.prototype.subscribe = function (args, cb1, cb2) {
 
         if (this.socket_connected === false) {

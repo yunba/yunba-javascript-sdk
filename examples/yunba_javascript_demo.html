@@ -17,12 +17,12 @@
       }
     });
 
-    yunba.message_cb = function (data) {
+    yunba.set_message_cb (function (data) {
         $('#msg_end').before('来自频道：' + data.topic);
         $('#msg_end').before('&nbsp;&nbsp;&nbsp;消息内容：' + data.msg);
         $('#msg_end').before("\<br\/\>");
         msg_end.scrollIntoView();
-    };
+    });
 
     function mqtt_connect() {
       yunba.connect(function (success, msg) {
