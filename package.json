@@ -1,0 +1,15 @@
+{
+    "author": "Tiger Zhang",
+    "name": "yunba-sdk",
+    "description": "Yunba - A notification service.",
+    "version": "1.0.2",
+    "homepage": "http://yunba.io",
+    "main": "./yunba.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yunba/yunba-javascript-sdk"
+    },
+    "dependencies": {
+        "socket.io-client": "0.9.16"
+    }
+}
