@@ -137,6 +137,20 @@
         })
     }
 
+    function get_state() {
+        var alias = $('#get_state').val();
+        yunba.get_state(alias, function (data) {
+            console.log('get state succ');
+            if (data.success) {
+                $('#msg_end').before('get state：' + data.data);
+            } else {
+                $('#msg_end').before('get state[error msg]：' + data.error_msg);
+            }
+            $('#msg_end').before("\<br\/\>");
+            msg_end.scrollIntoView();
+        });
+    }
+
     //监听关闭浏览器窗口时要断开mqtt连接
     //	window.onbeforeunload = function(){
     //    		yunba.disconnect();
@@ -222,6 +236,11 @@
     消息 <input type="text" placeholder="输入消息..." id="alias_message" style="..."/>
 
     <input type="button" value="Publish" onclick="mqtt_publish_by_alias();"/>
+</fieldset>
+<fieldset>
+    <legend>查询用户的在线状态</legend>
+    别名(Alias): <input type="text" placeholder="输入alias..." id="get_state"/>
+    <input type="button" value="Get State" onclick="get_state();"/>
 </fieldset>
 
 </body>

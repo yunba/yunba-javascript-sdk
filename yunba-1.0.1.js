@@ -27,7 +27,7 @@ var __bind = function (fn, me) {
 var __error = function (msg) {
     console.log(msg);
     return true;
-}
+};
 
 Array.prototype.contain = function (val) {
     for (var i = 0; i < this.length; i++) {
@@ -77,6 +77,7 @@ Yunba = (function () {
 //        me.receive_msg_cb_list = {};
         me.get_alias_cb = function() {};
         me.set_alias_cb = function() {};
+        me.get_state_cb = function() {};
 
         try {
             console.log('js client start init...');
@@ -125,11 +126,11 @@ Yunba = (function () {
 
             me.socket.on('alias', function(data) {
                 me.get_alias_cb(data);
-            })
+            });
 
             me.socket.on('set_alias_ack', function(data) {
                 me.set_alias_cb(data);
-            })
+            });
 
             me.socket.on('suback', function (data) {
                 if (data.success) {
@@ -138,7 +139,7 @@ Yunba = (function () {
                         me.suback_cb(true);
                 } else {
                     if (me.suback_cb)
-                        me.suback_cb(false, MSG_SUB_FAIL)
+                        me.suback_cb(false, MSG_SUB_FAIL);
                     return __error(MSG_SUB_FAIL);
                 }
             });
@@ -158,7 +159,7 @@ Yunba = (function () {
 
             me.socket.on('connack', function (result) {
                 if (result.success) {
-                    me.connected = true
+                    me.connected = true;
                     if (me.connack_cb)
                         me.connack_cb(true);
                 } else {
@@ -166,6 +167,10 @@ Yunba = (function () {
                         me.connack_cb(false, result.msg);
                 }
             });
+
+            me.socket.on('get_state_ack', function(data) {
+                me.get_state_cb(data);
+            })
 
         } catch (err) {
             return __error(MSG_CONNECT_FAIL) && init_callback(false, MSG_CONNECT_FAIL);
@@ -200,7 +205,7 @@ Yunba = (function () {
 
     Yunba.prototype.set_message_cb = function (cb) {
         this.message_cb = cb;
-    }
+    };
 
     Yunba.prototype.subscribe = function (args, cb1, cb2) {
 
@@ -251,7 +256,7 @@ Yunba = (function () {
 
         var channel = args['topic'];
         var callback = args['callback'] || callback || function () {
-        };
+            };
 
         if (!channel)  return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
 
@@ -282,7 +287,7 @@ Yunba = (function () {
         var msg = args['msg'];
         var qos = args['qos'] || QOS1;
         var callback = args['callback'] || callback || function () {
-        };
+            };
 
         if (!channel) return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
         if (!msg)     return __error(MSG_MISSING_MESSAGE) && callback(false, MSG_MISSING_MESSAGE);
@@ -301,12 +306,17 @@ Yunba = (function () {
     Yunba.prototype.set_alias = function (args, callback) {
         this.set_alias_cb = callback;
         this.socket.emit('set_alias', args);
-    }
+    };
 
     Yunba.prototype.get_alias = function (callback) {
         this.get_alias_cb = callback;
         this.socket.emit('get_alias');
-    }
+    };
+
+    Yunba.prototype.get_state = function (alias, callback) {
+        this.get_state_cb = callback;
+        this.socket.emit('get_state', {'alias': alias});
+    };
 
     return Yunba;
 
