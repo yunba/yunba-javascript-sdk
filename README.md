@@ -1,6 +1,6 @@
 # Yunba JavaScript SDK over Socket.IO
 
-文档 http://yunba.io/developers/javascript_sdk/
+文档 http://yunba.io/docs/#yunba-javascript-sdk-使用文档
 
 # 试用例子
 
