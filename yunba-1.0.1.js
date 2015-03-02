@@ -147,7 +147,7 @@ Yunba = (function () {
             me.socket.on('unsuback', function (result) {
                 console.log(result);
                 if (result.success) {
-                    SUB_CHANNEL_LIST.remove(channel);
+                    SUB_CHANNEL_LIST.remove(result.topic);
                     if (me.unsuback_cb)
                         me.unsuback_cb(true);
                 } else {
