@@ -161,7 +161,7 @@ Yunba = (function () {
 
             me.socket.on('connack', function (result) {
                 if (result.success) {
-                    if (me.use_sessionid && !$.query.get('sessionid')) {
+                    if (me.use_sessionid && result.sessionid && !$.query.get('sessionid')) {
                         var href = location.href;
                         var rurl = (href.indexOf('?') ? href.substr(0, href.indexOf('?')) : href) + $.query.set('sessionid', result.sessionid).toString();
                         if (history) {
