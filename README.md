@@ -4,7 +4,9 @@
 
 # 依赖
 [jquery-1.10.2.min.js](examples/javascripts/jquery-1.10.2.min.js)
+
 [jquery.query-object.js](examples/javascripts/jquery.query-object.js)
+
 [socket.io.js](examples/javascripts/socket.io.js)
 
 # 试用例子
