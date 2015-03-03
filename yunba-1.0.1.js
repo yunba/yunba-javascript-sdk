@@ -79,6 +79,7 @@ Yunba = (function () {
         me.set_alias_cb = function() {};
         me.get_state_cb = function() {};
         me.get_alias_list_cb = function() {};
+        me.use_sessionid = false;
 
         try {
             console.log('js client start init...');
@@ -160,6 +161,9 @@ Yunba = (function () {
 
             me.socket.on('connack', function (result) {
                 if (result.success) {
+                    if (me.use_sessionid && !$.query.get('sessionid')) {
+                        location.search = $.query.set('sessionid', result.sessionid).toString();
+                    }
                     me.connected = true;
                     if (me.connack_cb)
                         me.connack_cb(true);
@@ -187,8 +191,30 @@ Yunba = (function () {
             return false;
         }
         this.connack_cb = callback;
+        this.use_sessionid = false;
+        
         try {
             this.socket.emit('connect', {appkey: this.appkey});
+        } catch (err) {
+            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+        }
+    };
+
+    Yunba.prototype.connect_v2 = function (callback) {
+        if(this.socket_connected === false){
+            return false;
+        }
+        this.connack_cb = callback;
+        this.use_sessionid = true;
+
+        var connect_session = $.query.get('sessionid');
+
+        try {
+            if (connect_session) {
+                this.socket.emit('connect', {sessionid: connect_session});
+            } else {
+                this.socket.emit('connect', {appkey: this.appkey});
+            }
         } catch (err) {
             return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
         }
