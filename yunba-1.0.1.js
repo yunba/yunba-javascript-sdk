@@ -162,11 +162,17 @@ Yunba = (function () {
             me.socket.on('connack', function (result) {
                 if (result.success) {
                     if (me.use_sessionid && !$.query.get('sessionid')) {
-                        location.search = $.query.set('sessionid', result.sessionid).toString();
+                        var href = location.href;
+                        var rurl = (href.indexOf('?') ? href.substr(0, href.indexOf('?')) : href) + $.query.set('sessionid', result.sessionid).toString();
+                        if (history) {
+                            history.replaceState(null, null, rurl);
+                        } else {
+                            location.href = rurl;
+                        }
                     }
                     me.connected = true;
                     if (me.connack_cb)
-                        me.connack_cb(true);
+                        me.connack_cb(true, null, result.sessionid);
                 } else {
                     if (me.connack_cb)
                         me.connack_cb(false, result.msg);

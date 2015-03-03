@@ -2,6 +2,11 @@
 
 文档 http://yunba.io/docs/#yunba-javascript-sdk-使用文档
 
+# 依赖
+[jquery-1.10.2.min.js](examples/javascripts/jquery-1.10.2.min.js)
+[jquery.query-object.js](examples/javascripts/jquery.query-object.js)
+[socket.io.js](examples/javascripts/socket.io.js)
+
 # 试用例子
 
 examples/yunba_javascript_demo.html 演示了如何使用 Yunba JavaScript SDK。试用前先确保 Appkey 正确：
