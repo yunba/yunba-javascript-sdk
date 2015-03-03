@@ -78,6 +78,7 @@ Yunba = (function () {
         me.get_alias_cb = function() {};
         me.set_alias_cb = function() {};
         me.get_state_cb = function() {};
+        me.get_alias_list_cb = function() {};
 
         try {
             console.log('js client start init...');
@@ -170,7 +171,11 @@ Yunba = (function () {
 
             me.socket.on('get_state_ack', function(data) {
                 me.get_state_cb(data);
-            })
+            });
+
+            me.socket.on('get_alias_list_ack', function(data) {
+                me.get_alias_list_cb(data);
+            });
 
         } catch (err) {
             return __error(MSG_CONNECT_FAIL) && init_callback(false, MSG_CONNECT_FAIL);
@@ -316,6 +321,11 @@ Yunba = (function () {
     Yunba.prototype.get_state = function (alias, callback) {
         this.get_state_cb = callback;
         this.socket.emit('get_state', {'alias': alias});
+    };
+
+    Yunba.prototype.get_alias_list = function (topic, callback) {
+        this.get_alias_list_cb = callback;
+        this.socket.emit('get_alias_list', {'topic': topic});
     };
 
     return Yunba;
