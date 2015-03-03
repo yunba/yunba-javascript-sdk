@@ -226,6 +226,20 @@ Yunba = (function () {
         }
     };
 
+    Yunba.prototype.connect_by_sessionid = function(sessionid, callback) {
+        if(this.socket_connected === false){
+            return false;
+        }
+        this.connack_cb = callback;
+        this.use_sessionid = true;
+
+        try {
+            this.socket.emit('connect', {sessionid: sessionid});
+        } catch (err) {
+            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+        }
+    };
+
     Yunba.prototype.disconnect = function (callback) {
         var self = this;
         if (!self.connected) {
