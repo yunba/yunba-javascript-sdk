@@ -243,12 +243,13 @@ Yunba = (function () {
     Yunba.prototype.disconnect = function (callback) {
         var self = this;
         if (!self.connected) {
-            return callback(true);
+            callback && callback(true);
+            return;
         }
         try {
             this.socket.emit('disconn', {});
             self.connected = false;
-            callback(true);
+            callback && callback(true);
         } catch (err) {
             return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
         }
