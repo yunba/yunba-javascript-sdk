@@ -161,21 +161,20 @@ Yunba = (function () {
 
             me.socket.on('connack', function (result) {
                 if (result.success) {
-                    if (me.use_sessionid && result.sessionid && !$.query.get('sessionid')) {
-                        var href = location.href;
-                        var rurl = (href.indexOf('?') ? href.substr(0, href.indexOf('?')) : href) + $.query.set('sessionid', result.sessionid).toString();
-                        if (history) {
-                            history.replaceState(null, null, rurl);
-                        } else {
-                            location.href = rurl;
-                        }
-                    }
                     me.connected = true;
                     if (me.connack_cb)
                         me.connack_cb(true, null, result.sessionid);
+
+                    if (me.use_sessionid && result.sessionid && !$.query.get('sessionid')) {
+                        me._update_query_string($.query.set('sessionid', result.sessionid).toString());
+                    }
                 } else {
                     if (me.connack_cb)
                         me.connack_cb(false, result.msg);
+
+                    if ($.query.get('sessionid')) {
+                        me._update_query_string($.query.REMOVE('sessionid').toString());
+                    }
                 }
             });
 
@@ -373,6 +372,16 @@ Yunba = (function () {
     Yunba.prototype.get_alias_list = function (topic, callback) {
         this.get_alias_list_cb = callback;
         this.socket.emit('get_alias_list', {'topic': topic});
+    };
+
+    Yunba.prototype._update_query_string = function (new_query_string) {
+        var href = location.href;
+        var rurl = (href.indexOf('?') ? href.substr(0, href.indexOf('?')) : href) + new_query_string;
+        if (history && typeof history.replaceState === "function") {
+            history.replaceState(null, null, rurl);
+        } else {
+            location.href = rurl;
+        }
     };
 
     return Yunba;
