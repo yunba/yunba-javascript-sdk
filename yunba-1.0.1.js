@@ -172,7 +172,7 @@ Yunba = (function () {
                     if (me.connack_cb)
                         me.connack_cb(false, result.msg);
 
-                    if ($.query.get('sessionid')) {
+                    if (me.use_sessionid && $.query.get('sessionid')) {
                         me._update_query_string($.query.REMOVE('sessionid').toString());
                     }
                 }
@@ -234,6 +234,19 @@ Yunba = (function () {
 
         try {
             this.socket.emit('connect', {sessionid: sessionid});
+        } catch (err) {
+            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+        }
+    };
+
+    Yunba.prototype.connect_by_customid = function(customid, callback) {
+        if(this.socket_connected === false){
+            return false;
+        }
+        this.connack_cb = callback;
+
+        try {
+            this.socket.emit('connect', {appkey: this.appkey, customid: customid});
         } catch (err) {
             return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
         }
