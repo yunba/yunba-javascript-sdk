@@ -105,6 +105,59 @@
       });
     }
 
+    function mqtt_publish2() {
+
+        var topic = $('#topic_pub2').val();
+        if (topic == '' || !topic) {
+            alert('请输入频道！');
+            return false;
+        }
+
+        var msgId = $('#pub2MsgId').val();
+        var apnJson = $('#pub2Json').val();
+        var qos = $("input[name='publish2Qos']:checked").val();
+        var ttl = parseInt($('#pub2Ttl').val(), 10);
+
+        var pub2Msg = {
+            'topic': topic,
+            'msg': $('#pub2Msg').val()
+        };
+
+        var opts = {
+            'qos': qos || 1
+        };
+
+        if (apnJson != '') {
+            try {
+                opts['apn_json'] = {
+                    'aps': JSON.parse(apnJson)
+                };
+            } catch (err) {
+                alert(err);
+            }
+        }
+
+        if (/^\d+$/.test(msgId)) {
+            opts['messageId'] = msgId;
+        }
+
+        if (ttl) {
+            opts['time_to_live'] = ttl;
+        }
+
+        pub2Msg['opts'] = opts;
+
+        console.log(pub2Msg);
+
+        yunba.publish2(pub2Msg, function (success, msg) {
+            if (success) {
+
+            } else {
+                alert(msg);
+            }
+        });
+    }
+
     function mqtt_publish_by_alias() {
         if ($('#alias_pub').val() == '') {
             alert('请输入别名');
@@ -186,6 +239,10 @@
       font-weight: bold;
     }
 
+    input[type="radio"] {
+        height: 15px;
+    }
+
     .green {
       color: green;
     }
@@ -247,6 +304,19 @@
   消息：<input type="text" placeholder="随便输入点什么..." id="message" style="width:300px;"/>
 
   <input type="button" value="Publish" onclick="mqtt_publish();"/>
+</fieldset>
+<fieldset>
+    <legend>按频道发布(publish2)</legend>
+    频道：<input type="text" placeholder="输入频道..." id="topic_pub2"/>
+    消息：<input type="text" placeholder="随便输入点什么..." id="pub2Msg" style="width:300px;"/><br>
+    <!--QOS:-->
+    <!--<label><input name="publish2Qos" type="radio" id="qos-0" value="0"/>0</label>-->
+    <!--<label><input name="publish2Qos" type="radio" id="qos-1" value="1" checked/>1</label>-->
+    <!--<label><input name="publish2Qos" type="radio" id="qos-2" value="2"/>2</label><br>-->
+    Message ID：<input type="text" placeholder="请输入非负整数。如果不填，由系统自动生成" id="pub2MsgId" style="width:500px;"/><br>
+    TTL：<input type="text" placeholder="离线消息保留时间值，单位是秒(例如2天 2*24*3600)，默认值为5天" id="pub2Ttl" style="width:500px;"/><br>
+    APN JSON：<input type="text" placeholder="如果不填，则不会发送APN。例：{'sound':'bingbong.aiff','badge': 3, 'alert':'douban'}" id="pub2Json" style="width:500px;"/>
+    <input type="button" value="Publish2" onclick="mqtt_publish2();"/>
 </fieldset>
 <fieldset>
     <legend>别名</legend>

@@ -122,6 +122,17 @@ Yunba = (function () {
                 }
             });
 
+            me.socket.on('publish2_ack', function (result) {
+                if (result.success) {
+                    if (me.publish2_ack_cb)
+                        me.publish2_ack_cb(true, {messageId: result.messageId});
+                } else {
+                    if (me.publish2_ack_cb)
+                        me.publish2_ack_cb(false, MSG_PUB_FAIL);
+                    return __error(MSG_PUB_FAIL);
+                }
+            });
+
             me.socket.on('message', function (data) {
                 me.message_cb(data);
             });
@@ -358,6 +369,40 @@ Yunba = (function () {
 
         try {
             this.socket.emit('publish', {'topic': channel, 'msg': msg, 'qos': qos });
+        } catch (err) {
+            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+        }
+    };
+
+    Yunba.prototype.publish2 = function (args, callback) {
+
+        if (this.socket_connected === false) {
+            return false;
+        }
+
+        if (!this.connected) {
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+        }
+
+        this.publish2_ack_cb = callback;
+
+        var topic = args['topic'] || args['channel'];
+        var msg = args['msg'];
+        var opts = args['opts'] || {
+                'qos': QOS1
+            };
+
+        var callback = args['callback'] || callback || function () {
+            };
+
+        if (!topic) {
+            return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
+        } else if (!msg) {
+            return __error(MSG_MISSING_MESSAGE) && callback(false, MSG_MISSING_MESSAGE);
+        }
+
+        try {
+            this.socket.emit('publish2', {'topic': topic, 'msg': msg, 'opts': opts});
         } catch (err) {
             return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
         }
