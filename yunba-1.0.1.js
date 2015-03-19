@@ -409,7 +409,8 @@ Yunba = (function () {
     };
 
     Yunba.prototype.publish_to_alias = function (args, callback) {
-        this.socket.emit('publish_to_alias', args, callback);
+        this.puback_cb = callback;
+        this.socket.emit('publish_to_alias', args);
     };
 
     Yunba.prototype.set_alias = function (args, callback) {
