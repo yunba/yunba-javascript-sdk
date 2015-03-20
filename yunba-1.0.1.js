@@ -7,6 +7,7 @@ var QOS2 = 2;
 var SUB_CHANNEL_LIST = [];//已经订阅的频道或频道列表
 var MSG_MISSING_MESSAGE = 'Missing Message';
 var MSG_MISSING_CHANNEL = 'Missing Channel';
+var MSG_MISSING_ALIAS = 'Missing Alias';
 var MSG_SUB_FAIL = '订阅失败';
 var MSG_MISSING_CALLBACK = 'Missing Callback';
 var MSG_SUB_REPEAT_ERROR = '不能重复订阅一个频道';
@@ -411,6 +412,41 @@ Yunba = (function () {
     Yunba.prototype.publish_to_alias = function (args, callback) {
         this.puback_cb = callback;
         this.socket.emit('publish_to_alias', args);
+    };
+
+    Yunba.prototype.publish2_to_alias = function (args, callback) {
+
+        if (this.socket_connected === false) {
+            return false;
+        }
+
+        if (!this.connected) {
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+        }
+
+        this.publish2_ack_cb = callback;
+
+        var alias = args['alias'];
+        var msg = args['msg'];
+        var opts = args['opts'] || {
+                'qos': QOS1
+            };
+
+        var callback = args['callback'] || callback || function () {
+            };
+
+        if (!alias) {
+            return __error(MSG_MISSING_ALIAS) && callback(false, MSG_MISSING_ALIAS);
+        } else if (!msg) {
+            return __error(MSG_MISSING_ALIAS) && callback(false, MSG_MISSING_ALIAS);
+        }
+
+        try {
+            this.socket.emit('publish2_to_alias', {'alias': alias, 'msg': msg, 'opts': opts});
+        } catch (err) {
+            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+        }
+
     };
 
     Yunba.prototype.set_alias = function (args, callback) {

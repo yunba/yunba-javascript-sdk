@@ -173,6 +173,59 @@
         })
     }
 
+    function mqtt_publish2_to_alias() {
+
+        var alias = $('#alias_pub2ToAlias').val();
+        if (alias == '' || !alias) {
+            alert('请输入 Alias！');
+            return false;
+        }
+
+        var msgId = $('#pub2ToAliasMsgId').val();
+        var apnJson = $('#pub2ToAliasJson').val();
+        var qos = $("input[name='publish2AliasQos']:checked").val();
+        var ttl = parseInt($('#pub2ToAliasTtl').val(), 10);
+
+        var pub2AliasMsg = {
+            'alias': alias,
+            'msg': $('#pub2ToAliasMsg').val()
+        };
+
+        var opts = {
+            'qos': qos || 1
+        };
+
+        if (apnJson != '') {
+            try {
+                opts['apn_json'] = {
+                    'aps': JSON.parse(apnJson)
+                };
+            } catch (err) {
+                alert(err);
+            }
+        }
+
+        if (/^\d+$/.test(msgId)) {
+            opts['messageId'] = msgId;
+        }
+
+        if (ttl) {
+            opts['time_to_live'] = ttl;
+        }
+
+        pub2AliasMsg['opts'] = opts;
+
+        console.log(pub2AliasMsg);
+
+        yunba.publish2_to_alias(pub2AliasMsg, function (success, msg) {
+            if (success) {
+
+            } else {
+                alert(msg);
+            }
+        });
+    }
+
     function set_alias() {
         if ($('#alias_set').val() == '') {
             alert('请输入别名');
@@ -326,11 +379,21 @@
     <input type="button" value="Get Alias" onclick="get_alias();"/>
 </fieldset>
 <fieldset>
-    <legend>按别名发布</legend>
+    <legend>按别名发布(publish_to_alias)</legend>
     别名(Alias): <input type="text" placeholder="输入alias..." id="alias_pub"/>
     消息 <input type="text" placeholder="输入消息..." id="alias_message" style="..."/>
 
     <input type="button" value="Publish" onclick="mqtt_publish_by_alias();"/>
+</fieldset>
+<fieldset>
+    <legend>按别名发布(publish2_to_alias)</legend>
+    Alias：<input type="text" placeholder="输入频道..." id="alias_pub2ToAlias"/>
+    消息：<input type="text" placeholder="随便输入点什么..." id="pub2ToAliasMsg" style="width:300px;"/><br>
+    Message ID：<input type="text" placeholder="请输入非负整数。如果不填，由系统自动生成" id="pub2ToAliasMsgId" style="width:500px;"/><br>
+    TTL：<input type="text" placeholder="离线消息保留时间值，单位是秒(例如2天 2*24*3600)，默认值为5天" id="pub2ToAliasTtl" style="width:500px;"/><br>
+    APN JSON：<input type="text" placeholder='如果不填，则不会发送APN。例：{"sound":"bingbong.aiff","badge": 3, "alert":"douban"}'
+                    id="pub2ToAliasJson" style="width:500px;"/>
+    <input type="button" value="Publish2Alias" onclick="mqtt_publish2_to_alias();"/>
 </fieldset>
 <fieldset>
     <legend>查询用户的在线状态</legend>
