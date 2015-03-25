@@ -80,6 +80,7 @@ Yunba = (function () {
         me.set_alias_cb = function() {};
         me.get_state_cb = function() {};
         me.get_alias_list_cb = function() {};
+        me.get_topic_list_cb = function() {};
         me.use_sessionid = false;
 
         try {
@@ -194,8 +195,40 @@ Yunba = (function () {
                 me.get_state_cb(data);
             });
 
-            me.socket.on('get_alias_list_ack', function(data) {
-                me.get_alias_list_cb(data);
+            me.socket.on('get_topic_list_ack', function (result) {
+                if (result.success) {
+                    if (me.get_topic_list_cb) {
+                        me.get_topic_list_cb(true, {
+                            topics: result.data.topics
+                        });
+                    }
+
+                } else {
+                    if (me.get_topic_list_cb) {
+                        me.get_topic_list_cb(false, {
+                            error_msg: result.error_msg,
+                            messageId: result.messageId
+                        });
+                    }
+                }
+            });
+
+            me.socket.on('get_alias_list_ack', function (result) {
+                if (result.success) {
+                    if (me.get_alias_list_cb) {
+                        me.get_alias_list_cb(true, {
+                            alias: result.data.alias
+                        });
+                    }
+
+                } else {
+                    if (me.get_alias_list_cb) {
+                        me.get_alias_list_cb(false, {
+                            error_msg: result.error_msg,
+                            messageId: result.messageId
+                        });
+                    }
+                }
             });
 
         } catch (err) {
@@ -462,6 +495,11 @@ Yunba = (function () {
     Yunba.prototype.get_state = function (alias, callback) {
         this.get_state_cb = callback;
         this.socket.emit('get_state', {'alias': alias});
+    };
+
+    Yunba.prototype.get_topic_list = function (alias, callback) {
+        this.get_topic_list_cb = callback;
+        this.socket.emit('get_topic_list', {'alias': alias});
     };
 
     Yunba.prototype.get_alias_list = function (topic, callback) {

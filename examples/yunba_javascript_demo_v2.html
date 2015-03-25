@@ -267,17 +267,43 @@
         });
     }
 
-    function get_alias_list() {
-        var topic = $('#get_topic').val();
-        yunba.get_alias_list(topic, function (data) {
-            console.log('get alias list succ');
-            if (data.success) {
-                $('#msg_end').before('get alias list：' + JSON.stringify(data.data));
+    function get_topic_list(alias) {
+        var alias = $('#get_topic_list').val();
+
+        yunba.get_topic_list(alias, function (success, data) {
+            if (success) {
+
+                var topicList = "";
+
+                data.topics.forEach(function (topic) {
+                    topicList = topicList + topic + "  ";
+                });
+
+                $('#msg_end').before('get_topic_list：' + topicList);
+                $('#msg_end').before("\<br\/\>");
             } else {
-                $('#msg_end').before('get alias list[error msg]：' + data.error_msg);
+                console.log(data.error_msg);
             }
-            $('#msg_end').before("\<br\/\>");
-            msg_end.scrollIntoView();
+        });
+    }
+
+    function get_alias_list(topic) {
+        var topic = $('#get_alias_list').val();
+
+        yunba.get_alias_list(topic, function (success, data) {
+            if (success) {
+
+                var aliasList = "";
+
+                data.alias.forEach(function (alias) {
+                    aliasList = aliasList + alias + "  ";
+                });
+
+                $('#msg_end').before('get_alias_list：' + aliasList);
+                $('#msg_end').before("\<br\/\>");
+            } else {
+                console.log(data.error_msg);
+            }
         });
     }
 
@@ -396,14 +422,19 @@
     <input type="button" value="Publish2Alias" onclick="mqtt_publish2_to_alias();"/>
 </fieldset>
 <fieldset>
+    <legend>查询用户订阅的频道列表</legend>
+    别名(Alias): <input type="text" placeholder="输入alias..." id="get_topic_list"/>
+    <input type="button" value="Get Topic List" onclick="get_topic_list();"/>
+</fieldset>
+<fieldset>
+    <legend>查询频道下所有用户别名</legend>
+    频道(Topic): <input type="text" placeholder="输入topic..." id="get_alias_list"/>
+    <input type="button" value="Get Alias List" onclick="get_alias_list();"/>
+</fieldset>
+<fieldset>
     <legend>查询用户的在线状态</legend>
     别名(Alias): <input type="text" placeholder="输入alias..." id="get_state"/>
     <input type="button" value="Get State" onclick="get_state();"/>
-</fieldset>
-<fieldset>
-    <legend>查询频道的别名列表</legend>
-    频道(Topic): <input type="text" placeholder="输入topic..." id="get_topic"/>
-    <input type="button" value="Get Alias List" onclick="get_alias_list();"/>
 </fieldset>
 
 </body>
