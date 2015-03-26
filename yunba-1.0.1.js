@@ -183,15 +183,19 @@ Yunba = (function () {
                         me._update_query_string($.query.set('sessionid', result.sessionid).toString());
                     }
                 } else {
-                    if (me.connack_cb)
-                        me.connack_cb(false, result.msg);
-
                     if (MSG_SESSION_IN_USE === result.msg) {
-                        setTimeout(function () {
-                            rec_callback();
-                        }, 500);
-                    } else if (me.use_sessionid && $.query.get('sessionid')) {
-                        me._update_query_string($.query.REMOVE('sessionid').toString());
+                        // try again after 1s
+                        setTimeout(function() {
+                            init_callback(true);
+                        }, 1000);
+                    } else {
+                        if (me.connack_cb) {
+                            me.connack_cb(false, result.msg);
+                        }
+
+                        if (me.use_sessionid && $.query.get('sessionid')) {
+                            me._update_query_string($.query.REMOVE('sessionid').toString());
+                        }
                     }
                 }
             });
