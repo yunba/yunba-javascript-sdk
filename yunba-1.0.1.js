@@ -18,6 +18,7 @@ var MSG_NO_THIS_CHANNEL = '未订阅该频道';
 var MSG_PUB_FAIL = '信息发布失败';
 var MSG_NEED_CONNECT = '请先连接到 Yunba 服务';
 var MSG_NEED_SOCKET_CONNECT = 'JavaScript SDK 与消息服务器已经断开链接，请刷新页面重新链接。';
+var MSG_SESSION_IN_USE = 'the session id is in use';
 
 var __bind = function (fn, me) {
     return function () {
@@ -185,7 +186,11 @@ Yunba = (function () {
                     if (me.connack_cb)
                         me.connack_cb(false, result.msg);
 
-                    if (me.use_sessionid && $.query.get('sessionid')) {
+                    if (MSG_SESSION_IN_USE === result.msg) {
+                        setTimeout(function () {
+                            rec_callback();
+                        }, 500);
+                    } else if (me.use_sessionid && $.query.get('sessionid')) {
                         me._update_query_string($.query.REMOVE('sessionid').toString());
                     }
                 }
