@@ -60,6 +60,7 @@ Yunba = (function () {
         setup = setup || {};
         this.server = setup['server'] || DEF_SERVER;
         this.port = setup['port'] || DEF_PORT;
+		this.auto_reconnect = setup['auto_reconnect'] || false;
         if (!setup['appkey']) {
             return false;
         } else {
@@ -84,9 +85,10 @@ Yunba = (function () {
         me.get_topic_list_cb = function() {};
         me.use_sessionid = false;
 
+		var socketio_connect = function () {
         try {
             console.log('js client start init...');
-            me.socket = io.connect('http://' + this.server + ':' + this.port);
+            me.socket = io.connect('http://' + me.server + ':' + me.port, {'force new connection': true});
             me.socket.on('connect', function () {
                 console.log('js client init success.');
                 me.socket_connected = true;
@@ -94,9 +96,15 @@ Yunba = (function () {
             });
 
             me.socket.on('error',function(e){
-                console.log('js client init error:',e);
-                me.socket_connected=false;
-                init_callback(false);
+			    if (me.auto_reconnect) {
+				    setTimeout(function() {
+				        socketio_connect();
+					}, 1000);
+				} else {
+                    console.log('js client init error:',e);
+                    me.socket_connected=false;
+                    init_callback(false);
+				}
             });
 
             me.socket.on('disconnect', function () {
@@ -111,7 +119,13 @@ Yunba = (function () {
                 }
             });
             me.socket.on('reconnect_failed', function () {
-                console.log('js client reconnect failed.');
+			    if (me.auto_reconnect) {
+				    setTimeout(function() {
+				        socketio_connect();
+					}, 1000);
+				} else {
+                    console.log('js client reconnect failed.');
+				}
             });
 
             me.socket.on('puback', function (result) {
@@ -241,8 +255,17 @@ Yunba = (function () {
             });
 
         } catch (err) {
-            return __error(MSG_CONNECT_FAIL) && init_callback(false, MSG_CONNECT_FAIL);
+		    if (me.auto_reconnect) {
+				setTimeout(function() {
+				    socketio_connect();
+			    }, 1000);
+		    } else {
+                return __error(MSG_CONNECT_FAIL) && init_callback(false, MSG_CONNECT_FAIL);
+			}
         }
+		};
+		
+		socketio_connect();
     };
 
     Yunba.prototype.connect = function (callback) {
