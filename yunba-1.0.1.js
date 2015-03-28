@@ -108,9 +108,15 @@ Yunba = (function () {
             });
 
             me.socket.on('disconnect', function () {
-                console.log('js client disconnect.');
-                me.socket_connected = false;
-                init_callback(false);
+			    if (me.auto_reconnect) {
+				    setTimeout(function() {
+				        socketio_connect();
+					}, 1000);
+				} else {
+                	console.log('js client disconnect.');
+                	me.socket_connected = false;
+                	init_callback(false);
+				}
             });
             me.socket.on('reconnect', function () {
                 console.log('js client reconnect.');
