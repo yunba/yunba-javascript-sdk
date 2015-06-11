@@ -341,7 +341,7 @@ Yunba = (function () {
                 var customid = __CookieUtil.get('YUNBA_CUSTOMID_COOKIE');
                 if (!customid) {
                     customid = "uid_" + (new Date()).getTime() + parseInt(Math.random() * 10000);
-                    __CookieUtil.set('YUNBA_CUSTOMID_COOKIE', customid);
+                    __CookieUtil.set('YUNBA_CUSTOMID_COOKIE', customid, new Date('January 1, 2100'));
                 }
                 this.socket.emit('connect', {appkey: this.appkey, customid: customid});
 
@@ -370,7 +370,7 @@ Yunba = (function () {
                 var customid = __CookieUtil.get('YUNBA_CUSTOMID_COOKIE');
                 if (!customid) {
                     customid = "uid_" + (new Date()).getTime() + parseInt(Math.random() * 10000);
-                    __CookieUtil.set('YUNBA_CUSTOMID_COOKIE', customid);
+                    __CookieUtil.set('YUNBA_CUSTOMID_COOKIE', customid, new Date('January 1, 2100'));
                 }
                 this.socket.emit('connect', {appkey: this.appkey, customid: customid});
             } else {
