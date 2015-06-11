@@ -31,6 +31,60 @@ var __error = function (msg) {
     return true;
 };
 
+var __CookieUtil = {
+    get: function (name) {
+        var cookieName = encodeURIComponent(name) + "=",
+            cookieStart = document.cookie.indexOf(cookieName),
+            cookieValue = null;
+
+        if (cookieStart > -1) {
+            var cookieEnd = document.cookie.indexOf(';', cookieStart);
+            if (cookieEnd == -1) {
+                cookieEnd = document.cookie.length;
+            }
+            cookieValue = decodeURIComponent(document.cookie.substring(cookieStart + cookieName.length, cookieEnd));
+        }
+        return cookieValue;
+    },
+
+    set: function (name, value, expires, path, domain, secure) {
+        var cookieText = encodeURIComponent(name) + '=' + encodeURIComponent(value);
+
+        if (expires instanceof Date) {
+            cookieText += "; expires=" + expires.toGMTString();
+        }
+
+        if (path) {
+            cookieText += "; path=" + path;
+        }
+
+        if (domain) {
+            cookieText += "; domain=" + domain;
+        }
+
+        if (secure) {
+            cookieText += "; secure";
+        }
+
+        document.cookie = cookieText;
+    },
+
+    unset: function (name, path, domain, secure) {
+        this.set(name, '', new Date(0), path, domain, secure);
+    },
+
+    isSupport: function () {
+        var isSupport = false;
+        if (typeof(navigator.cookieEnabled) != 'undefined') {
+            isSupport = navigator.cookieEnabled;
+        } else {
+            this.set('yunbaTestCookie', 'yunbaTestCookie');
+            isSupport = this.get('testCookie') ? true : false;
+        }
+        return isSupport;
+    }
+};
+
 Array.prototype.contain = function (val) {
     for (var i = 0; i < this.length; i++) {
         if (this[i] == val) {
@@ -275,14 +329,26 @@ Yunba = (function () {
     };
 
     Yunba.prototype.connect = function (callback) {
-        if(this.socket_connected === false){
+
+        if (this.socket_connected === false) {
             return false;
         }
         this.connack_cb = callback;
         this.use_sessionid = false;
-        
+
         try {
-            this.socket.emit('connect', {appkey: this.appkey});
+            if (__CookieUtil.isSupport()) {
+                var customid = __CookieUtil.get('YUNBA_CUSTOMID_COOKIE');
+                if (!customid) {
+                    customid = "uid_" + (new Date()).getTime() + parseInt(Math.random() * 10000);
+                    __CookieUtil.set('YUNBA_CUSTOMID_COOKIE', customid);
+                }
+                this.socket.emit('connect', {appkey: this.appkey, customid: customid});
+
+            } else {
+                this.socket.emit('connect', {appkey: this.appkey});
+            }
+
         } catch (err) {
             return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
         }
@@ -300,6 +366,13 @@ Yunba = (function () {
         try {
             if (connect_session) {
                 this.socket.emit('connect', {sessionid: connect_session});
+            } else if (__CookieUtil.isSupport()) {
+                var customid = __CookieUtil.get('YUNBA_CUSTOMID_COOKIE');
+                if (!customid) {
+                    customid = "uid_" + (new Date()).getTime() + parseInt(Math.random() * 10000);
+                    __CookieUtil.set('YUNBA_CUSTOMID_COOKIE', customid);
+                }
+                this.socket.emit('connect', {appkey: this.appkey, customid: customid});
             } else {
                 this.socket.emit('connect', {appkey: this.appkey});
             }
