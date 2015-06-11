@@ -79,7 +79,7 @@ var __CookieUtil = {
             isSupport = navigator.cookieEnabled;
         } else {
             this.set('yunbaTestCookie', 'yunbaTestCookie');
-            isSupport = this.get('testCookie') ? true : false;
+            isSupport = this.get('yunbaTestCookie') ? true : false;
         }
         return isSupport;
     }
