@@ -31,6 +31,22 @@ var __error = function (msg) {
     return true;
 };
 
+var __MessageIdUtil = {
+    get: function () {
+        var randomness = Math.round(Math.random() * 1e16) % Math.pow(2, 23);
+
+        if (randomness.toString(2).length > 23) {
+            randomness = (randomness >>> (randomness.toString(2).length - 23)).toString(2);
+        } else {
+            randomness = (randomness << (23 - randomness.toString(2).length)).toString(2);
+        }
+
+        var timestamp = (new Date().getTime()).toString(2).substring(10, 40);
+
+        return parseInt(timestamp + randomness, 2);
+    }
+};
+
 var __CookieUtil = {
     get: function (name) {
         var cookieName = encodeURIComponent(name) + "=",
@@ -190,20 +206,12 @@ Yunba = (function () {
 
             me.socket.on('puback', function (result) {
                 if (result.success) {
-                    if (me.puback_cb) {
-                        me.puback_cb(true, {messageId: result.messageId});
-                    }
-
-                    if (me.publish2_ack_cb) {
-                        me.publish2_ack_cb(true, {messageId: result.messageId});
+                    if (me.puback_cb && me.puback_cb[result.messageId]) {
+                        me.puback_cb[result.messageId](true, {messageId: result.messageId});
                     }
                 } else {
-                    if (me.puback_cb) {
-                        me.puback_cb(false, MSG_PUB_FAIL);
-                    }
-
-                    if (me.publish2_ack_cb) {
-                        me.publish2_ack_cb(false, MSG_PUB_FAIL);
+                    if (me.puback_cb && me.puback_cb[result.messageId]) {
+                        me.puback_cb[result.messageId](false, MSG_PUB_FAIL);
                     }
                     return __error(MSG_PUB_FAIL);
                 }
@@ -500,19 +508,23 @@ Yunba = (function () {
             return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
         }
 
-        this.puback_cb = callback;
-
         var channel = args['topic'] || args['channel'];
         var msg = args['msg'];
         var qos = args['qos'] || QOS1;
+        var msgId = args['messageId'] || __MessageIdUtil.get();
+
+        this.puback_cb = this.puback_cb || {};
+        this.puback_cb[msgId.toString()] = callback;
+
         var callback = args['callback'] || callback || function () {
             };
 
         if (!channel) return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
         if (!msg)     return __error(MSG_MISSING_MESSAGE) && callback(false, MSG_MISSING_MESSAGE);
 
+
         try {
-            this.socket.emit('publish', {'topic': channel, 'msg': msg, 'qos': qos });
+            this.socket.emit('publish', {'topic': channel, 'msg': msg, 'qos': qos ,'messageId': msgId });
         } catch (err) {
             return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
         }
@@ -528,13 +540,15 @@ Yunba = (function () {
             return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
         }
 
-        this.publish2_ack_cb = callback;
-
         var topic = args['topic'] || args['channel'];
         var msg = args['msg'];
         var opts = args['opts'] || {
                 'qos': QOS1
             };
+        opts['messageId'] = opts['messageId'] ? opts['messageId'] :  __MessageIdUtil.get();
+
+        this.puback_cb = this.puback_cb || {};
+        this.puback_cb[opts['messageId'].toString()] = callback;
 
         var callback = args['callback'] || callback || function () {
             };
@@ -553,7 +567,9 @@ Yunba = (function () {
     };
 
     Yunba.prototype.publish_to_alias = function (args, callback) {
-        this.puback_cb = callback;
+        args['messageId'] = args['messageId'] || __MessageIdUtil.get();
+        this.puback_cb = this.puback_cb || {};
+        this.puback_cb[args['messageId'].toString()] = callback;
         this.socket.emit('publish_to_alias', args);
     };
 
@@ -574,6 +590,10 @@ Yunba = (function () {
         var opts = args['opts'] || {
                 'qos': QOS1
             };
+        opts['messageId'] = opts['messageId'] ? opts['messageId'] :  __MessageIdUtil.get();
+
+        this.puback_cb = this.puback_cb || {};
+        this.puback_cb[opts['messageId'].toString()] = callback;
 
         var callback = args['callback'] || callback || function () {
             };
