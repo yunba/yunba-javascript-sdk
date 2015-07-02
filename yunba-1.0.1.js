@@ -190,22 +190,21 @@ Yunba = (function () {
 
             me.socket.on('puback', function (result) {
                 if (result.success) {
-                    if (me.puback_cb)
+                    if (me.puback_cb) {
                         me.puback_cb(true, {messageId: result.messageId});
-                } else {
-                    if (me.puback_cb)
-                        me.puback_cb(false, MSG_PUB_FAIL);
-                    return __error(MSG_PUB_FAIL);
-                }
-            });
+                    }
 
-            me.socket.on('publish2_ack', function (result) {
-                if (result.success) {
-                    if (me.publish2_ack_cb)
+                    if (me.publish2_ack_cb) {
                         me.publish2_ack_cb(true, {messageId: result.messageId});
+                    }
                 } else {
-                    if (me.publish2_ack_cb)
+                    if (me.puback_cb) {
+                        me.puback_cb(false, MSG_PUB_FAIL);
+                    }
+
+                    if (me.publish2_ack_cb) {
                         me.publish2_ack_cb(false, MSG_PUB_FAIL);
+                    }
                     return __error(MSG_PUB_FAIL);
                 }
             });
