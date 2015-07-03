@@ -148,6 +148,7 @@ Yunba = (function () {
         rec_callback = rec_callback || function(){};
         me.message_cb = function() {};
 //        me.receive_msg_cb_list = {};
+        me.puback_cb = me.puback_cb || {};
         me.get_alias_cb = function() {};
         me.set_alias_cb = function() {};
         me.get_state_cb = function() {};
@@ -512,7 +513,6 @@ Yunba = (function () {
         var qos = args['qos'] || QOS1;
         var msgId = args['messageId'] || __MessageIdUtil.get();
 
-        this.puback_cb = this.puback_cb || {};
         this.puback_cb[msgId.toString()] = callback;
 
         var callback = args['callback'] || callback || function () {
@@ -546,7 +546,6 @@ Yunba = (function () {
             };
         opts['messageId'] = opts['messageId'] ? opts['messageId'] :  __MessageIdUtil.get();
 
-        this.puback_cb = this.puback_cb || {};
         this.puback_cb[opts['messageId'].toString()] = callback;
 
         var callback = args['callback'] || callback || function () {
@@ -567,7 +566,6 @@ Yunba = (function () {
 
     Yunba.prototype.publish_to_alias = function (args, callback) {
         args['messageId'] = args['messageId'] || __MessageIdUtil.get();
-        this.puback_cb = this.puback_cb || {};
         this.puback_cb[args['messageId'].toString()] = callback;
         this.socket.emit('publish_to_alias', args);
     };
@@ -590,8 +588,6 @@ Yunba = (function () {
                 'qos': QOS1
             };
         opts['messageId'] = opts['messageId'] ? opts['messageId'] :  __MessageIdUtil.get();
-
-        this.puback_cb = this.puback_cb || {};
         this.puback_cb[opts['messageId'].toString()] = callback;
 
         var callback = args['callback'] || callback || function () {
