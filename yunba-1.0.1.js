@@ -41,9 +41,9 @@ var __MessageIdUtil = {
             randomness = (randomness << (23 - randomness.toString(2).length)).toString(2);
         }
 
-        var timestamp = (new Date().getTime()).toString(2).substring(10, 40);
+        var timestamp = (new Date().getTime()).toString(2);
 
-        return parseInt(timestamp + randomness, 2);
+        return parseInt(timestamp, 2).toString() + parseInt(randomness, 2).toString();
     }
 };
 
@@ -242,7 +242,6 @@ Yunba = (function () {
             });
 
             me.socket.on('unsuback', function (result) {
-                console.log(result);
                 if (result.success) {
                     SUB_CHANNEL_LIST.remove(result.topic);
                     if (me.unsuback_cb)
