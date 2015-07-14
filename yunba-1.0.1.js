@@ -130,7 +130,7 @@ Yunba = (function () {
         setup = setup || {};
         this.server = setup['server'] || DEF_SERVER;
         this.port = setup['port'] || DEF_PORT;
-		this.auto_reconnect = setup['auto_reconnect'] || false;
+        this.auto_reconnect = setup['auto_reconnect'] || false;
         if (!setup['appkey']) {
             return false;
         } else {
@@ -144,195 +144,202 @@ Yunba = (function () {
     Yunba.prototype.init = function (init_callback, rec_callback) {
         var me = this;
         init_callback = init_callback || function () {
+            };
+        rec_callback = rec_callback || function () {
+            };
+        me.message_cb = function () {
         };
-        rec_callback = rec_callback || function(){};
-        me.message_cb = function() {};
 //        me.receive_msg_cb_list = {};
         me.puback_cb = me.puback_cb || {};
-        me.get_alias_cb = function() {};
-        me.set_alias_cb = function() {};
-        me.get_state_cb = function() {};
-        me.get_alias_list_cb = function() {};
-        me.get_topic_list_cb = function() {};
+        me.get_alias_cb = function () {
+        };
+        me.set_alias_cb = function () {
+        };
+        me.get_state_cb = function () {
+        };
+        me.get_alias_list_cb = function () {
+        };
+        me.get_topic_list_cb = function () {
+        };
         me.use_sessionid = false;
 
-		var socketio_connect = function () {
-        try {
-            console.log('js client start init...');
-            me.socket = io.connect('http://' + me.server + ':' + me.port, {'force new connection': true});
-            me.socket.on('connect', function () {
-                console.log('js client init success.');
-                me.socket_connected = true;
-                init_callback(true);
-            });
+        var socketio_connect = function () {
+            try {
+                console.log('js client start init...');
+                me.socket = io.connect('http://' + me.server + ':' + me.port, {'force new connection': true});
+                me.socket.on('connect', function () {
+                    console.log('js client init success.');
+                    me.socket_connected = true;
+                    init_callback(true);
+                });
 
-            me.socket.on('error',function(e){
-			    if (me.auto_reconnect) {
-				    setTimeout(function() {
-				        socketio_connect();
-					}, 1000);
-				} else {
-                    console.log('js client init error:',e);
-                    me.socket_connected=false;
-                    init_callback(false);
-				}
-            });
-
-            me.socket.on('disconnect', function () {
-			    if (me.auto_reconnect) {
-				    setTimeout(function() {
-				        socketio_connect();
-					}, 1000);
-				} else {
-                	console.log('js client disconnect.');
-                	me.socket_connected = false;
-                	init_callback(false);
-				}
-            });
-            me.socket.on('reconnect', function () {
-                console.log('js client reconnect.');
-                if (rec_callback) {
-                    rec_callback();
-                }
-            });
-            me.socket.on('reconnect_failed', function () {
-			    if (me.auto_reconnect) {
-				    setTimeout(function() {
-				        socketio_connect();
-					}, 1000);
-				} else {
-                    console.log('js client reconnect failed.');
-				}
-            });
-
-            me.socket.on('puback', function (result) {
-                if (result.success) {
-                    if (me.puback_cb && me.puback_cb[result.messageId]) {
-                        me.puback_cb[result.messageId](true, {messageId: result.messageId});
-                    }
-                } else {
-                    if (me.puback_cb && me.puback_cb[result.messageId]) {
-                        me.puback_cb[result.messageId](false, MSG_PUB_FAIL);
-                    }
-                    return __error(MSG_PUB_FAIL);
-                }
-            });
-
-            me.socket.on('message', function (data) {
-                me.message_cb(data);
-            });
-
-            me.socket.on('alias', function(data) {
-                me.get_alias_cb(data);
-            });
-
-            me.socket.on('set_alias_ack', function(data) {
-                me.set_alias_cb(data);
-            });
-
-            me.socket.on('suback', function (data) {
-                if (data.success) {
-                    //如果订阅成功，则监听来自服务端的message消息
-                    if (me.suback_cb)
-                        me.suback_cb(true);
-                } else {
-                    if (me.suback_cb)
-                        me.suback_cb(false, MSG_SUB_FAIL);
-                    return __error(MSG_SUB_FAIL);
-                }
-            });
-
-            me.socket.on('unsuback', function (result) {
-                if (result.success) {
-                    SUB_CHANNEL_LIST.remove(result.topic);
-                    if (me.unsuback_cb)
-                        me.unsuback_cb(true);
-                } else {
-                    if (me.unsuback_cb)
-                        me.unsuback_cb(false, MSG_UNSUB_FAIL);
-                    return __error(MSG_UNSUB_FAIL);
-                }
-            });
-
-            me.socket.on('connack', function (result) {
-                if (result.success) {
-                    me.connected = true;
-                    if (me.connack_cb)
-                        me.connack_cb(true, null, result.sessionid);
-
-                    if (me.use_sessionid && result.sessionid && !$.query.get('sessionid')) {
-                        me._update_query_string($.query.set('sessionid', result.sessionid).toString());
-                    }
-                } else {
-                    if (MSG_SESSION_IN_USE === result.msg) {
-                        // try again after 1s
-                        setTimeout(function() {
-                            init_callback(true);
+                me.socket.on('error', function (e) {
+                    if (me.auto_reconnect) {
+                        setTimeout(function () {
+                            socketio_connect();
                         }, 1000);
                     } else {
-                        if (me.connack_cb) {
-                            me.connack_cb(false, result.msg);
+                        console.log('js client init error:', e);
+                        me.socket_connected = false;
+                        init_callback(false);
+                    }
+                });
+
+                me.socket.on('disconnect', function () {
+                    if (me.auto_reconnect) {
+                        setTimeout(function () {
+                            socketio_connect();
+                        }, 1000);
+                    } else {
+                        console.log('js client disconnect.');
+                        me.socket_connected = false;
+                        init_callback(false);
+                    }
+                });
+                me.socket.on('reconnect', function () {
+                    console.log('js client reconnect.');
+                    if (rec_callback) {
+                        rec_callback();
+                    }
+                });
+                me.socket.on('reconnect_failed', function () {
+                    if (me.auto_reconnect) {
+                        setTimeout(function () {
+                            socketio_connect();
+                        }, 1000);
+                    } else {
+                        console.log('js client reconnect failed.');
+                    }
+                });
+
+                me.socket.on('puback', function (result) {
+                    if (result.success) {
+                        if (me.puback_cb && me.puback_cb[result.messageId]) {
+                            me.puback_cb[result.messageId](true, {messageId: result.messageId});
+                        }
+                    } else {
+                        if (me.puback_cb && me.puback_cb[result.messageId]) {
+                            me.puback_cb[result.messageId](false, MSG_PUB_FAIL);
+                        }
+                        return __error(MSG_PUB_FAIL);
+                    }
+                });
+
+                me.socket.on('message', function (data) {
+                    me.message_cb(data);
+                });
+
+                me.socket.on('alias', function (data) {
+                    me.get_alias_cb(data);
+                });
+
+                me.socket.on('set_alias_ack', function (data) {
+                    me.set_alias_cb(data);
+                });
+
+                me.socket.on('suback', function (data) {
+                    if (data.success) {
+                        //如果订阅成功，则监听来自服务端的message消息
+                        if (me.suback_cb)
+                            me.suback_cb(true);
+                    } else {
+                        if (me.suback_cb)
+                            me.suback_cb(false, MSG_SUB_FAIL);
+                        return __error(MSG_SUB_FAIL);
+                    }
+                });
+
+                me.socket.on('unsuback', function (result) {
+                    if (result.success) {
+                        SUB_CHANNEL_LIST.remove(result.topic);
+                        if (me.unsuback_cb)
+                            me.unsuback_cb(true);
+                    } else {
+                        if (me.unsuback_cb)
+                            me.unsuback_cb(false, MSG_UNSUB_FAIL);
+                        return __error(MSG_UNSUB_FAIL);
+                    }
+                });
+
+                me.socket.on('connack', function (result) {
+                    if (result.success) {
+                        me.connected = true;
+                        if (me.connack_cb)
+                            me.connack_cb(true, null, result.sessionid);
+
+                        if (me.use_sessionid && result.sessionid && !$.query.get('sessionid')) {
+                            me._update_query_string($.query.set('sessionid', result.sessionid).toString());
+                        }
+                    } else {
+                        if (MSG_SESSION_IN_USE === result.msg) {
+                            // try again after 1s
+                            setTimeout(function () {
+                                init_callback(true);
+                            }, 1000);
+                        } else {
+                            if (me.connack_cb) {
+                                me.connack_cb(false, result.msg);
+                            }
+
+                            if (me.use_sessionid && $.query.get('sessionid')) {
+                                me._update_query_string($.query.REMOVE('sessionid').toString());
+                            }
+                        }
+                    }
+                });
+
+                me.socket.on('get_state_ack', function (data) {
+                    me.get_state_cb(data);
+                });
+
+                me.socket.on('get_topic_list_ack', function (result) {
+                    if (result.success) {
+                        if (me.get_topic_list_cb) {
+                            me.get_topic_list_cb(true, {
+                                topics: result.data.topics
+                            });
                         }
 
-                        if (me.use_sessionid && $.query.get('sessionid')) {
-                            me._update_query_string($.query.REMOVE('sessionid').toString());
+                    } else {
+                        if (me.get_topic_list_cb) {
+                            me.get_topic_list_cb(false, {
+                                error_msg: result.error_msg,
+                                messageId: result.messageId
+                            });
                         }
                     }
-                }
-            });
+                });
 
-            me.socket.on('get_state_ack', function(data) {
-                me.get_state_cb(data);
-            });
+                me.socket.on('get_alias_list_ack', function (result) {
+                    if (result.success) {
+                        if (me.get_alias_list_cb) {
+                            me.get_alias_list_cb(true, {
+                                alias: result.data.alias
+                            });
+                        }
 
-            me.socket.on('get_topic_list_ack', function (result) {
-                if (result.success) {
-                    if (me.get_topic_list_cb) {
-                        me.get_topic_list_cb(true, {
-                            topics: result.data.topics
-                        });
+                    } else {
+                        if (me.get_alias_list_cb) {
+                            me.get_alias_list_cb(false, {
+                                error_msg: result.error_msg,
+                                messageId: result.messageId
+                            });
+                        }
                     }
+                });
 
+            } catch (err) {
+                if (me.auto_reconnect) {
+                    setTimeout(function () {
+                        socketio_connect();
+                    }, 1000);
                 } else {
-                    if (me.get_topic_list_cb) {
-                        me.get_topic_list_cb(false, {
-                            error_msg: result.error_msg,
-                            messageId: result.messageId
-                        });
-                    }
+                    return __error(MSG_CONNECT_FAIL) && init_callback(false, MSG_CONNECT_FAIL);
                 }
-            });
+            }
+        };
 
-            me.socket.on('get_alias_list_ack', function (result) {
-                if (result.success) {
-                    if (me.get_alias_list_cb) {
-                        me.get_alias_list_cb(true, {
-                            alias: result.data.alias
-                        });
-                    }
-
-                } else {
-                    if (me.get_alias_list_cb) {
-                        me.get_alias_list_cb(false, {
-                            error_msg: result.error_msg,
-                            messageId: result.messageId
-                        });
-                    }
-                }
-            });
-
-        } catch (err) {
-		    if (me.auto_reconnect) {
-				setTimeout(function() {
-				    socketio_connect();
-			    }, 1000);
-		    } else {
-                return __error(MSG_CONNECT_FAIL) && init_callback(false, MSG_CONNECT_FAIL);
-			}
-        }
-		};
-		
-		socketio_connect();
+        socketio_connect();
     };
 
     Yunba.prototype.connect = function (callback) {
@@ -362,7 +369,7 @@ Yunba = (function () {
     };
 
     Yunba.prototype.connect_v2 = function (callback) {
-        if(this.socket_connected === false){
+        if (this.socket_connected === false) {
             return false;
         }
         this.connack_cb = callback;
@@ -388,8 +395,8 @@ Yunba = (function () {
         }
     };
 
-    Yunba.prototype.connect_by_sessionid = function(sessionid, callback) {
-        if(this.socket_connected === false){
+    Yunba.prototype.connect_by_sessionid = function (sessionid, callback) {
+        if (this.socket_connected === false) {
             return false;
         }
         this.connack_cb = callback;
@@ -402,8 +409,8 @@ Yunba = (function () {
         }
     };
 
-    Yunba.prototype.connect_by_customid = function(customid, callback) {
-        if(this.socket_connected === false){
+    Yunba.prototype.connect_by_customid = function (customid, callback) {
+        if (this.socket_connected === false) {
             return false;
         }
         this.connack_cb = callback;
@@ -445,7 +452,7 @@ Yunba = (function () {
         var channel = args['topic'];
         var qos = args['qos'] || QOS1;
         this.suback_cb = args['callback'] || cb1 || function () {
-        };
+            };
 
         if (!this.connected) {
             return __error(MSG_NEED_CONNECT) && this.suback_cb(false, MSG_NEED_CONNECT);
@@ -462,7 +469,7 @@ Yunba = (function () {
         }
 
         try {
-            this.socket.emit('subscribe', { 'topic': channel, 'qos': qos });
+            this.socket.emit('subscribe', {'topic': channel, 'qos': qos});
         } catch (err) {
             return __error(MSG_SOCKET_EMIT_ERROR) && this.suback_cb(false, MSG_SOCKET_EMIT_ERROR);
         }
@@ -492,7 +499,7 @@ Yunba = (function () {
             return __error(MSG_NO_THIS_CHANNEL) && callback(false, MSG_NO_THIS_CHANNEL);
         }
         try {
-            this.socket.emit('unsubscribe', { 'topic': channel});
+            this.socket.emit('unsubscribe', {'topic': channel});
         } catch (err) {
             return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
         }
@@ -500,7 +507,7 @@ Yunba = (function () {
 
     Yunba.prototype.publish = function (args, callback) {
 
-        if(this.socket_connected === false){
+        if (this.socket_connected === false) {
             return false;
         }
 
@@ -523,7 +530,7 @@ Yunba = (function () {
 
 
         try {
-            this.socket.emit('publish', {'topic': channel, 'msg': msg, 'qos': qos ,'messageId': msgId });
+            this.socket.emit('publish', {'topic': channel, 'msg': msg, 'qos': qos, 'messageId': msgId});
         } catch (err) {
             return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
         }
@@ -544,7 +551,7 @@ Yunba = (function () {
         var opts = args['opts'] || {
                 'qos': QOS1
             };
-        opts['messageId'] = opts['messageId'] ? opts['messageId'] :  __MessageIdUtil.get();
+        opts['messageId'] = opts['messageId'] ? opts['messageId'] : __MessageIdUtil.get();
 
         this.puback_cb[opts['messageId'].toString()] = callback;
 
@@ -587,7 +594,7 @@ Yunba = (function () {
         var opts = args['opts'] || {
                 'qos': QOS1
             };
-        opts['messageId'] = opts['messageId'] ? opts['messageId'] :  __MessageIdUtil.get();
+        opts['messageId'] = opts['messageId'] ? opts['messageId'] : __MessageIdUtil.get();
         this.puback_cb[opts['messageId'].toString()] = callback;
 
         var callback = args['callback'] || callback || function () {
