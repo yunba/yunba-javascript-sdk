@@ -72,7 +72,7 @@ IE7 以下版本会报错对象不支持 "stringify" 属性或方法，在导入
 examples/yunba_javascript_demo_customid.html 演示了如何使用 Yunba JavaScript SDK。试用前先确保 Appkey 正确：
 
 ```javascript
-	var yunba = new Yunba({server:'sock.yunba.io', port:3000, appkey:'52fcc04c4dc903d66d6f8f92'});
+	var yunba = new Yunba({appkey:'52fcc04c4dc903d66d6f8f92'});
 ```
 
 ** 替换为您的 Appkey **
