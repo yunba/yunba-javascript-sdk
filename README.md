@@ -34,6 +34,14 @@ messageId 是一个64位数字转化成的字符串
 
 高41位当前时间的时间戳 ＋ 低23位随机数
 
+**IE 7以下版本支持**
+IE7 以下版本会报错对象不支持 "stringify" 属性或方法，导入 json2.js 即可解决。
+
+```javascript
+<!-[if lt IE 7]>
+<script  type='text/javascript' src='/javascripts/json2.js'></script>
+<![endif]->
+```
 
 # 试用例子
 
