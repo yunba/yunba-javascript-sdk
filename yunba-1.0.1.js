@@ -1,10 +1,11 @@
 var Yunba;
-var DEF_SERVER = 'sock.yunba.io';
-var DEF_PORT = 3000;
+//var DEF_SERVER = 'sock.yunba.io';
+//var DEF_PORT = 3000;
+var DEF_SERVER = 'abj-mongo-2.yunba.io';
+var DEF_PORT = 5555;
 var QOS0 = 0;
 var QOS1 = 1;
 var QOS2 = 2;
-var SUB_CHANNEL_LIST = [];//已经订阅的频道或频道列表
 var MSG_MISSING_MESSAGE = 'Missing Message';
 var MSG_MISSING_CHANNEL = 'Missing Channel';
 var MSG_MISSING_ALIAS = 'Missing Alias';
@@ -150,7 +151,9 @@ Yunba = (function () {
         me.message_cb = function () {
         };
 //        me.receive_msg_cb_list = {};
-        me.puback_cb = me.puback_cb || {};
+        me.puback_cb = {};
+        me.suback_cb = {};
+        me.unsuback_cb = {};
         me.get_alias_cb = function () {
         };
         me.set_alias_cb = function () {
@@ -213,12 +216,10 @@ Yunba = (function () {
                 });
 
                 me.socket.on('puback', function (result) {
-                    if (result.success) {
-                        if (me.puback_cb && me.puback_cb[result.messageId]) {
-                            me.puback_cb[result.messageId](true, {messageId: result.messageId});
-                        }
+                    if (result.success && me.puback_cb[result.messageId]) {
+                        me.puback_cb[result.messageId](true, {messageId: result.messageId});
                     } else {
-                        if (me.puback_cb && me.puback_cb[result.messageId]) {
+                        if (me.puback_cb[result.messageId]) {
                             me.puback_cb[result.messageId](false, MSG_PUB_FAIL);
                         }
                         return __error(MSG_PUB_FAIL);
@@ -237,26 +238,20 @@ Yunba = (function () {
                     me.set_alias_cb(data);
                 });
 
-                me.socket.on('suback', function (data) {
-                    if (data.success) {
-                        //如果订阅成功，则监听来自服务端的message消息
-                        if (me.suback_cb)
-                            me.suback_cb(true);
+                me.socket.on('suback', function (result) {
+                    if (result.success) {
+                        me.suback_cb[result.messageId](true);
                     } else {
-                        if (me.suback_cb)
-                            me.suback_cb(false, MSG_SUB_FAIL);
+                        me.suback_cb[result.messageId](false, MSG_SUB_FAIL);
                         return __error(MSG_SUB_FAIL);
                     }
                 });
 
                 me.socket.on('unsuback', function (result) {
                     if (result.success) {
-                        SUB_CHANNEL_LIST.remove(result.topic);
-                        if (me.unsuback_cb)
-                            me.unsuback_cb(true);
+                        me.unsuback_cb[result.messageId](true);
                     } else {
-                        if (me.unsuback_cb)
-                            me.unsuback_cb(false, MSG_UNSUB_FAIL);
+                        me.unsuback_cb[result.messageId](false, MSG_UNSUB_FAIL);
                         return __error(MSG_UNSUB_FAIL);
                     }
                 });
@@ -357,14 +352,14 @@ Yunba = (function () {
                     customid = "uid_" + (new Date()).getTime() + parseInt(Math.random() * 10000);
                     __CookieUtil.set('YUNBA_CUSTOMID_COOKIE', customid, new Date('January 1, 2100'));
                 }
-                this.socket.emit('connect', {appkey: this.appkey, customid: customid});
+                this.socket.emit('connect_v2', {appkey: this.appkey, customid: customid});
 
             } else {
-                this.socket.emit('connect', {appkey: this.appkey});
+                this.socket.emit('connect_v2', {appkey: this.appkey});
             }
 
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
@@ -379,19 +374,19 @@ Yunba = (function () {
 
         try {
             if (connect_session) {
-                this.socket.emit('connect', {sessionid: connect_session});
+                this.socket.emit('connect_v2', {sessionid: connect_session});
             } else if (__CookieUtil.isSupport()) {
                 var customid = __CookieUtil.get('YUNBA_CUSTOMID_COOKIE');
                 if (!customid) {
                     customid = "uid_" + (new Date()).getTime() + parseInt(Math.random() * 10000);
                     __CookieUtil.set('YUNBA_CUSTOMID_COOKIE', customid, new Date('January 1, 2100'));
                 }
-                this.socket.emit('connect', {appkey: this.appkey, customid: customid});
+                this.socket.emit('connect_v2', {appkey: this.appkey, customid: customid});
             } else {
-                this.socket.emit('connect', {appkey: this.appkey});
+                this.socket.emit('connect_v2', {appkey: this.appkey});
             }
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
@@ -403,9 +398,9 @@ Yunba = (function () {
         this.use_sessionid = true;
 
         try {
-            this.socket.emit('connect', {sessionid: sessionid});
+            this.socket.emit('connect_v2', {sessionid: sessionid});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
@@ -416,9 +411,9 @@ Yunba = (function () {
         this.connack_cb = callback;
 
         try {
-            this.socket.emit('connect', {appkey: this.appkey, customid: customid});
+            this.socket.emit('connect_v2', {appkey: this.appkey, customid: customid});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
@@ -433,7 +428,7 @@ Yunba = (function () {
             self.connected = false;
             callback && callback(true);
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
@@ -441,37 +436,28 @@ Yunba = (function () {
         this.message_cb = cb;
     };
 
-    Yunba.prototype.subscribe = function (args, cb1, cb2) {
+    Yunba.prototype.subscribe = function (args, callback) {
 
         if (this.socket_connected === false) {
             return false;
         }
 
-        var self = this;
-
         var channel = args['topic'];
         var qos = args['qos'] || QOS1;
-        this.suback_cb = args['callback'] || cb1 || function () {
+        var msgId = args['messageId'] || __MessageIdUtil.get();
+        this.suback_cb[msgId.toString()] = args['callback'] || callback || function () {
             };
 
         if (!this.connected) {
-            return __error(MSG_NEED_CONNECT) && this.suback_cb(false, MSG_NEED_CONNECT);
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
         }
 
-        if (!this.suback_cb) return __error(MSG_MISSINGl_CALLBACK);
-        if (!channel)  return __error(MSG_MISSING_CHANNEL) && this.suback_cb(false, MSG_MISSING_CHANNEL);
-
-        //检查是否已经订阅该频道
-        if (SUB_CHANNEL_LIST.contain(channel)) {
-//            return __error(MSG_SUB_REPEAT_ERROR) && this.suback_cb(false, MSG_SUB_REPEAT_ERROR);
-        } else {
-            SUB_CHANNEL_LIST.push(channel);
-        }
+        if (!channel)  return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
 
         try {
-            this.socket.emit('subscribe', {'topic': channel, 'qos': qos});
+            this.socket.emit('subscribe', {'topic': channel, 'qos': qos, 'messageId': msgId});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && this.suback_cb(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
 
     };
@@ -482,26 +468,21 @@ Yunba = (function () {
             return false;
         }
 
-        this.unsuback_cb = callback;
-
         if (!this.connected) {
             return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
         }
 
         var channel = args['topic'];
-        var callback = args['callback'] || callback || function () {
+        var msgId = args['messageId'] || __MessageIdUtil.get();
+        this.unsuback_cb[msgId.toString()] = args['callback'] || callback || function () {
             };
 
         if (!channel)  return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
 
-        //检查是否已经订阅该频道
-        if (!SUB_CHANNEL_LIST.contain(channel)) {
-            return __error(MSG_NO_THIS_CHANNEL) && callback(false, MSG_NO_THIS_CHANNEL);
-        }
         try {
-            this.socket.emit('unsubscribe', {'topic': channel});
+            this.socket.emit('unsubscribe', {'topic': channel, 'messageId': msgId});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
@@ -532,7 +513,7 @@ Yunba = (function () {
         try {
             this.socket.emit('publish', {'topic': channel, 'msg': msg, 'qos': qos, 'messageId': msgId});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
@@ -551,7 +532,7 @@ Yunba = (function () {
         var opts = args['opts'] || {
                 'qos': QOS1
             };
-        opts['messageId'] = opts['messageId'] ? opts['messageId'] : __MessageIdUtil.get();
+        opts['messageId'] = opts['messageId'] || __MessageIdUtil.get();
 
         this.puback_cb[opts['messageId'].toString()] = callback;
 
@@ -567,7 +548,7 @@ Yunba = (function () {
         try {
             this.socket.emit('publish2', {'topic': topic, 'msg': msg, 'opts': opts});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
@@ -587,14 +568,12 @@ Yunba = (function () {
             return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
         }
 
-        this.publish2_ack_cb = callback;
-
         var alias = args['alias'];
         var msg = args['msg'];
         var opts = args['opts'] || {
                 'qos': QOS1
             };
-        opts['messageId'] = opts['messageId'] ? opts['messageId'] : __MessageIdUtil.get();
+        opts['messageId'] = opts['messageId'] || __MessageIdUtil.get();
         this.puback_cb[opts['messageId'].toString()] = callback;
 
         var callback = args['callback'] || callback || function () {
@@ -609,7 +588,7 @@ Yunba = (function () {
         try {
             this.socket.emit('publish2_to_alias', {'alias': alias, 'msg': msg, 'opts': opts});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
 
     };
