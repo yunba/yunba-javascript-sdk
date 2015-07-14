@@ -164,7 +164,6 @@ Yunba = (function () {
         };
         me.get_topic_list_cb = function () {
         };
-        me.use_sessionid = false;
 
         var socketio_connect = function () {
             try {
@@ -261,10 +260,6 @@ Yunba = (function () {
                         me.connected = true;
                         if (me.connack_cb)
                             me.connack_cb(true, null, result.sessionid);
-
-                        if (me.use_sessionid && result.sessionid && !$.query.get('sessionid')) {
-                            me._update_query_string($.query.set('sessionid', result.sessionid).toString());
-                        }
                     } else {
                         if (MSG_SESSION_IN_USE === result.msg) {
                             // try again after 1s
@@ -274,10 +269,6 @@ Yunba = (function () {
                         } else {
                             if (me.connack_cb) {
                                 me.connack_cb(false, result.msg);
-                            }
-
-                            if (me.use_sessionid && $.query.get('sessionid')) {
-                                me._update_query_string($.query.REMOVE('sessionid').toString());
                             }
                         }
                     }
@@ -343,7 +334,6 @@ Yunba = (function () {
             return false;
         }
         this.connack_cb = callback;
-        this.use_sessionid = false;
 
         try {
             if (__CookieUtil.isSupport()) {
@@ -358,47 +348,6 @@ Yunba = (function () {
                 this.socket.emit('connect_v2', {appkey: this.appkey});
             }
 
-        } catch (err) {
-            return __error(err) && callback(false, err);
-        }
-    };
-
-    Yunba.prototype.connect_v2 = function (callback) {
-        if (this.socket_connected === false) {
-            return false;
-        }
-        this.connack_cb = callback;
-        this.use_sessionid = true;
-
-        var connect_session = $.query.get('sessionid');
-
-        try {
-            if (connect_session) {
-                this.socket.emit('connect_v2', {sessionid: connect_session});
-            } else if (__CookieUtil.isSupport()) {
-                var customid = __CookieUtil.get('YUNBA_CUSTOMID_COOKIE');
-                if (!customid) {
-                    customid = "uid_" + (new Date()).getTime() + parseInt(Math.random() * 10000);
-                    __CookieUtil.set('YUNBA_CUSTOMID_COOKIE', customid, new Date('January 1, 2100'));
-                }
-                this.socket.emit('connect_v2', {appkey: this.appkey, customid: customid});
-            } else {
-                this.socket.emit('connect_v2', {appkey: this.appkey});
-            }
-        } catch (err) {
-            return __error(err) && callback(false, err);
-        }
-    };
-
-    Yunba.prototype.connect_by_sessionid = function (sessionid, callback) {
-        if (this.socket_connected === false) {
-            return false;
-        }
-        this.connack_cb = callback;
-        this.use_sessionid = true;
-
-        try {
-            this.socket.emit('connect_v2', {sessionid: sessionid});
         } catch (err) {
             return __error(err) && callback(false, err);
         }
