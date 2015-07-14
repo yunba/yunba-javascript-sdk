@@ -21,15 +21,15 @@ var MSG_NEED_CONNECT = '请先连接到 Yunba 服务';
 var MSG_NEED_SOCKET_CONNECT = 'JavaScript SDK 与消息服务器已经断开链接，请刷新页面重新链接。';
 var MSG_SESSION_IN_USE = 'the session id is in use';
 
-var __bind = function (fn, me) {
-    return function () {
-        return fn.apply(me, arguments);
-    };
+var __error = function (msg) {
+    __log(msg);
+    return true;
 };
 
-var __error = function (msg) {
-    console.log(msg);
-    return true;
+var __log = function (msg) {
+    if (typeof console != "undefined" && typeof console.log != "undefined") {
+        console.log(msg);
+    }
 };
 
 var __MessageIdUtil = {
@@ -168,10 +168,10 @@ Yunba = (function () {
 
         var socketio_connect = function () {
             try {
-                console.log('js client start init...');
+                __log('js client start init...');
                 me.socket = io.connect('http://' + me.server + ':' + me.port, {'force new connection': true});
                 me.socket.on('connect', function () {
-                    console.log('js client init success.');
+                    __log('js client init success.');
                     me.socket_connected = true;
                     init_callback(true);
                 });
@@ -182,7 +182,7 @@ Yunba = (function () {
                             socketio_connect();
                         }, 1000);
                     } else {
-                        console.log('js client init error:', e);
+                        __log('js client init error:', e);
                         me.socket_connected = false;
                         init_callback(false);
                     }
@@ -194,13 +194,13 @@ Yunba = (function () {
                             socketio_connect();
                         }, 1000);
                     } else {
-                        console.log('js client disconnect.');
+                        __log('js client disconnect.');
                         me.socket_connected = false;
                         init_callback(false);
                     }
                 });
                 me.socket.on('reconnect', function () {
-                    console.log('js client reconnect.');
+                    __log('js client reconnect.');
                     if (rec_callback) {
                         rec_callback();
                     }
@@ -211,7 +211,7 @@ Yunba = (function () {
                             socketio_connect();
                         }, 1000);
                     } else {
-                        console.log('js client reconnect failed.');
+                        __log('js client reconnect failed.');
                     }
                 });
 

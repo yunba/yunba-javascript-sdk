@@ -8,7 +8,7 @@
   <script type="text/javascript" src="javascripts/socket.io-1.3.5.min.js"></script>
   <script type="text/javascript" src="../yunba-1.0.1.js"></script>
   <script>
-    var yunba = new Yunba({appkey: '52fcc04c4dc903d66d6f8f92'});
+    var yunba = new Yunba({appkey: '54924efe4e48598f209b8ee3'});
     yunba.init(function (success) {
       if (success) {
         $('#msg').html('<div style="color:green">已连接上 socket</div>');
@@ -145,8 +145,6 @@
 
         pub2Msg['opts'] = opts;
 
-        console.log(pub2Msg);
-
         yunba.publish2(pub2Msg, function (success, msg) {
             if (success) {
 
@@ -213,8 +211,6 @@
 
         pub2AliasMsg['opts'] = opts;
 
-        console.log(pub2AliasMsg);
-
         yunba.publish2_to_alias(pub2AliasMsg, function (success, msg) {
             if (success) {
 
@@ -234,7 +230,6 @@
 
         yunba.set_alias({'alias': alias}, function (success, msg) {
             if (success) {
-                console.log('set alias succ');
                 alert('set alias succ');
             } else {
                 alert(msg);
@@ -244,7 +239,6 @@
 
     function get_alias() {
         yunba.get_alias( function(data) {
-            console.log('get alias succ');
             $('#msg_end').before('get alias：' + data.alias);
             $('#msg_end').before("\<br\/\>");
             msg_end.scrollIntoView();
@@ -254,7 +248,6 @@
     function get_state() {
         var alias = $('#get_state').val();
         yunba.get_state(alias, function (data) {
-            console.log('get state succ');
             if (data.success) {
                 $('#msg_end').before('get state：' + data.data);
             } else {
@@ -273,14 +266,15 @@
 
                 var topicList = "";
 
-                data.topics.forEach(function (topic) {
+                for (var index = 0; index < data.topics.length; index ++) {
+                    var topic = data.topics[index];
                     topicList = topicList + topic + "  ";
-                });
+                }
 
                 $('#msg_end').before('get_topic_list：' + topicList);
                 $('#msg_end').before("\<br\/\>");
             } else {
-                console.log(data.error_msg);
+                alert(data.error_msg);
             }
         });
     }
@@ -293,14 +287,15 @@
 
                 var aliasList = "";
 
-                data.alias.forEach(function (alias) {
+                for (var index = 0; index < data.alias.length; index ++) {
+                    var alias = data.alias[index];
                     aliasList = aliasList + alias + "  ";
-                });
+                }
 
                 $('#msg_end').before('get_alias_list：' + aliasList);
                 $('#msg_end').before("\<br\/\>");
             } else {
-                console.log(data.error_msg);
+                alert(data.error_msg);
             }
         });
     }
