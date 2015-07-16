@@ -8,7 +8,9 @@ var QOS1 = 1;
 var QOS2 = 2;
 var MSG_MISSING_MESSAGE = 'Missing Message';
 var MSG_MISSING_CHANNEL = 'Missing Channel';
+var MSG_ERROR_CHANNEL = 'Topic 只支持英文数字下划线，长度不超过50个字符。';
 var MSG_MISSING_ALIAS = 'Missing Alias';
+var MSG_ERROR_ALIAS = 'Alias 只支持英文数字下划线，长度不超过50个字符。';
 var MSG_SUB_FAIL = '订阅失败';
 var MSG_MISSING_CALLBACK = 'Missing Callback';
 var MSG_SUB_REPEAT_ERROR = '不能重复订阅一个频道';
@@ -23,7 +25,7 @@ var MSG_SESSION_IN_USE = 'the session id is in use';
 
 var __error = function (msg) {
     __log(msg);
-    return true;
+    return false;
 };
 
 var __log = function (msg) {
@@ -150,7 +152,6 @@ Yunba = (function () {
             };
         me.message_cb = function () {
         };
-//        me.receive_msg_cb_list = {};
         me.puback_cb = {};
         me.suback_cb = {};
         me.unsuback_cb = {};
@@ -226,6 +227,14 @@ Yunba = (function () {
                 });
 
                 me.socket.on('message', function (data) {
+                    if (/\/p$/.test(data.topic)) {
+                        try {
+                            data.presence = JSON.parse(data.msg);
+                        } catch (err) {
+                            __error(err);
+                            data.err = err;
+                        }
+                    }
                     me.message_cb(data);
                 });
 
@@ -391,7 +400,7 @@ Yunba = (function () {
             return false;
         }
 
-        var channel = args['topic'];
+        var topic = args['topic'];
         var qos = args['qos'] || QOS1;
         var msgId = args['messageId'] || __MessageIdUtil.get();
         this.suback_cb[msgId.toString()] = args['callback'] || callback || function () {
@@ -401,14 +410,42 @@ Yunba = (function () {
             return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
         }
 
-        if (!channel)  return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
+        if (!this._validate_topic(topic, callback)) {
+            return false;
+        }
 
         try {
-            this.socket.emit('subscribe', {'topic': channel, 'qos': qos, 'messageId': msgId});
+            this.socket.emit('subscribe', {'topic': topic, 'qos': qos, 'messageId': msgId});
         } catch (err) {
             return __error(err) && callback(false, err);
         }
+    };
 
+    Yunba.prototype.subscribe_presence = function (args, callback) {
+
+        if (this.socket_connected === false) {
+            return false;
+        }
+
+        var topic = args['topic'];
+        var qos = args['qos'] || QOS1;
+        var msgId = args['messageId'] || __MessageIdUtil.get();
+        this.suback_cb[msgId.toString()] = args['callback'] || callback || function () {
+            };
+
+        if (!this.connected) {
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+        }
+
+        if (!this._validate_topic(topic, callback)) {
+            return false;
+        }
+
+        try {
+            this.socket.emit('subscribe', {'topic': topic + '/p', 'qos': qos, 'messageId': msgId});
+        } catch (err) {
+            return __error(err) && callback(false, err);
+        }
     };
 
     Yunba.prototype.unsubscribe = function (args, callback) {
@@ -421,15 +458,43 @@ Yunba = (function () {
             return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
         }
 
-        var channel = args['topic'];
+        var topic = args['topic'];
         var msgId = args['messageId'] || __MessageIdUtil.get();
         this.unsuback_cb[msgId.toString()] = args['callback'] || callback || function () {
             };
 
-        if (!channel)  return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
+        if (!this._validate_topic(topic, callback)) {
+            return false;
+        }
 
         try {
-            this.socket.emit('unsubscribe', {'topic': channel, 'messageId': msgId});
+            this.socket.emit('unsubscribe', {'topic': topic, 'messageId': msgId});
+        } catch (err) {
+            return __error(err) && callback(false, err);
+        }
+    };
+
+
+    Yunba.prototype.unsubscribe_presence = function (args, callback) {
+        if (this.socket_connected === false) {
+            return false;
+        }
+
+        if (!this.connected) {
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+        }
+
+        var topic = args['topic'];
+        var msgId = args['messageId'] || __MessageIdUtil.get();
+        this.unsuback_cb[msgId.toString()] = args['callback'] || callback || function () {
+            };
+
+        if (!this._validate_topic(topic, callback)) {
+            return false;
+        }
+
+        try {
+            this.socket.emit('unsubscribe', {'topic': topic + '/p', 'messageId': msgId});
         } catch (err) {
             return __error(err) && callback(false, err);
         }
@@ -445,7 +510,7 @@ Yunba = (function () {
             return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
         }
 
-        var channel = args['topic'] || args['channel'];
+        var topic = args['topic'] || args['channel'];
         var msg = args['msg'];
         var qos = args['qos'] || QOS1;
         var msgId = args['messageId'] || __MessageIdUtil.get();
@@ -455,12 +520,14 @@ Yunba = (function () {
         var callback = args['callback'] || callback || function () {
             };
 
-        if (!channel) return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
-        if (!msg)     return __error(MSG_MISSING_MESSAGE) && callback(false, MSG_MISSING_MESSAGE);
-
+        if (!this._validate_topic(topic, callback)) {
+            return false;
+        } else if (!this._validate_message(msg, callback)) {
+            return false;
+        }
 
         try {
-            this.socket.emit('publish', {'topic': channel, 'msg': msg, 'qos': qos, 'messageId': msgId});
+            this.socket.emit('publish', {'topic': topic, 'msg': msg, 'qos': qos, 'messageId': msgId});
         } catch (err) {
             return __error(err) && callback(false, err);
         }
@@ -488,10 +555,10 @@ Yunba = (function () {
         var callback = args['callback'] || callback || function () {
             };
 
-        if (!topic) {
-            return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
-        } else if (!msg) {
-            return __error(MSG_MISSING_MESSAGE) && callback(false, MSG_MISSING_MESSAGE);
+        if (!this._validate_topic(topic, callback)) {
+            return false;
+        } else if (!this._validate_message(msg, callback)) {
+            return false;
         }
 
         try {
@@ -502,9 +569,34 @@ Yunba = (function () {
     };
 
     Yunba.prototype.publish_to_alias = function (args, callback) {
-        args['messageId'] = args['messageId'] || __MessageIdUtil.get();
+
+        if (this.socket_connected === false) {
+            return false;
+        }
+
+        if (!this.connected) {
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+        }
+
+        var alias = args['alias'];
+        var msg = args['msg'];
+        var messageId = args['messageId'] || __MessageIdUtil.get();
         this.puback_cb[args['messageId'].toString()] = callback;
-        this.socket.emit('publish_to_alias', args);
+
+        var callback = args['callback'] || callback || function () {
+            };
+
+        if (!this._validate_alias(alias, callback)) {
+            return false;
+        } else if (!this._validate_message(msg, callback)) {
+            return false;
+        }
+
+        try {
+            this.socket.emit('publish_to_alias', {'alias': alias, 'msg': msg, 'messageId': messageId});
+        } catch (err) {
+            return __error(err) && callback(false, err);
+        }
     };
 
     Yunba.prototype.publish2_to_alias = function (args, callback) {
@@ -528,10 +620,10 @@ Yunba = (function () {
         var callback = args['callback'] || callback || function () {
             };
 
-        if (!alias) {
-            return __error(MSG_MISSING_ALIAS) && callback(false, MSG_MISSING_ALIAS);
-        } else if (!msg) {
-            return __error(MSG_MISSING_ALIAS) && callback(false, MSG_MISSING_ALIAS);
+        if (!this._validate_alias(alias, callback)) {
+            return false;
+        } else if (!this._validate_message(msg, callback)) {
+            return false;
         }
 
         try {
@@ -539,12 +631,15 @@ Yunba = (function () {
         } catch (err) {
             return __error(err) && callback(false, err);
         }
-
     };
 
     Yunba.prototype.set_alias = function (args, callback) {
+        var alias = args['alias'];
+        if (!this._validate_alias(alias, callback)) {
+            return false;
+        }
         this.set_alias_cb = callback;
-        this.socket.emit('set_alias', args);
+        this.socket.emit('set_alias', {'alias': alias});
     };
 
     Yunba.prototype.get_alias = function (callback) {
@@ -565,6 +660,31 @@ Yunba = (function () {
     Yunba.prototype.get_alias_list = function (topic, callback) {
         this.get_alias_list_cb = callback;
         this.socket.emit('get_alias_list', {'topic': topic});
+    };
+
+    Yunba.prototype._validate_topic = function (topic, callback) {
+        if (!topic) {
+            return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
+        } else if (topic.length > 50 || !/^([a-zA-Z0-9_]*)$/.test(topic)) {
+            return __error(MSG_ERROR_CHANNEL) && callback(false, MSG_ERROR_CHANNEL);
+        }
+        return true;
+    };
+
+    Yunba.prototype._validate_alias = function (alias, callback) {
+        if (!alias) {
+            return __error(MSG_MISSING_ALIAS) && callback(false, MSG_MISSING_ALIAS);
+        } else if (alias.length > 50 || !/^([a-zA-Z0-9_]*)$/.test(alias)) {
+            return __error(MSG_ERROR_ALIAS) && callback(false, MSG_ERROR_ALIAS);
+        }
+        return true;
+    };
+
+    Yunba.prototype._validate_message = function (message, callback) {
+        if (!message) {
+            return __error(MSG_MISSING_MESSAGE) && callback(false, MSG_MISSING_MESSAGE);
+        }
+        return true;
     };
 
     Yunba.prototype._update_query_string = function (new_query_string) {

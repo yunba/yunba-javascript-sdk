@@ -71,6 +71,21 @@
       });
     }
 
+    function mqtt_subscribe_presence() {
+        if ($('#topic_sub').val() == '') {
+            alert('请输入频道！');
+            return false;
+        }
+        var topic = $('#topic_sub').val();
+        yunba.subscribe_presence({'topic': topic }, function (success, msg) {
+            if (success) {
+                $('#topic_list').append('<b id="topic_id_' + topic + '/p' + '">' + topic + '/p' + '</b>');
+            } else {
+                alert(msg);
+            }
+        });
+    }
+
     function mqtt_unsubscribe() {
 
       if ($('#topic_sub').val() == '') {
@@ -86,6 +101,23 @@
           alert(data);
         }
       });
+    }
+
+    function mqtt_unsubscribe_presence() {
+
+        if ($('#topic_sub').val() == '') {
+            alert('请输入频道！');
+            return false;
+        }
+        var topic = $('#topic_sub').val();
+
+        yunba.unsubscribe_presence({'topic': topic}, function (success, data) {
+            if (success) {
+                $('#topic_id_' + topic + '/p').remove();
+            } else {
+                alert(data);
+            }
+        });
     }
 
     function mqtt_publish() {
@@ -356,6 +388,8 @@
   <input type="text" placeholder="输入频道..." id="topic_sub"/>
   <input type="button" value="Subscribe" onclick="mqtt_subscribe();"/>
   <input type="button" value="Unsubscribe" onclick="mqtt_unsubscribe();"/>
+  <input type="button" value="Subscribe_Presence" onclick="mqtt_subscribe_presence();"/>
+  <input type="button" value="Unsubscribe_Presence" onclick="mqtt_unsubscribe_presence();"/>
   <br/>
 
   <div style="float:left;width:50%;">
