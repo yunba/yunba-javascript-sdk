@@ -581,7 +581,7 @@ Yunba = (function () {
         var alias = args['alias'];
         var msg = args['msg'];
         var messageId = args['messageId'] || __MessageIdUtil.get();
-        this.puback_cb[args['messageId'].toString()] = callback;
+        this.puback_cb[messageId.toString()] = callback;
 
         var callback = args['callback'] || callback || function () {
             };
