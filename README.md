@@ -1,13 +1,10 @@
 # Yunba JavaScript SDK over Socket.IO
 
-文档 http://yunba.io/docs/#yunba-javascript-sdk-使用文档
+文档 
+[http://yunba.io/docs2/Javascript_SDK/](http://yunba.io/docs2/Javascript_SDK/)
 
 # 依赖
-[jquery-1.10.2.min.js](examples/javascripts/jquery-1.10.2.min.js)
-
-[jquery.query-object.js](examples/javascripts/jquery.query-object.js)
-
-[socket.io.js](examples/javascripts/socket.io.js)
+[socket.io.js](examples/javascripts/socket.io-1.3.5.min.js)
 
 # 说明
 
@@ -38,15 +35,47 @@ messageId 是一个64位数字转化成的字符串
 
 高41位当前时间的时间戳 ＋ 低23位随机数
 
+## 浏览器支持
+<table>
+  <tbody>
+    <tr>
+      <td>IE</td>
+      <td>Safari</td>
+      <td>Chrome</td>
+      <td>Opera</td>
+      <td>Firefox</td>
+    </tr>
+    <tr>
+      <td align="center">7+</td>
+      <td align="center">✓</td>
+      <td align="center">✓</td>
+      <td align="center">✓</td>
+      <td align="center">✓</td>
+    </tr>
+  </tbody>
+</table>
+
+**IE 7以下版本支持**
+
+IE7 以下版本会报错对象不支持 "stringify" 属性或方法，在导入 socket.io.js 前导入 json2.js 即可解决。
+
+[https://github.com/douglascrockford/JSON-js](https://github.com/douglascrockford/JSON-js)
+
+```javascript
+<!-[if lt IE 7]>
+<script  type='text/javascript' src='/javascripts/json2.js'></script>
+<![endif]->
+```
 
 # 试用例子
 
 examples/yunba_javascript_demo_customid.html 演示了如何使用 Yunba JavaScript SDK。试用前先确保 Appkey 正确：
 
 ```javascript
-	var yunba = new Yunba({server:'sock.yunba.io', port:3000, appkey:'52fcc04c4dc903d66d6f8f92'});
+	var yunba = new Yunba({appkey:'52fcc04c4dc903d66d6f8f92'});
 ```
 
 ** 替换为您的 Appkey **
 
 然后用浏览器打开即可。
+

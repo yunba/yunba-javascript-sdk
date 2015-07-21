@@ -4,10 +4,11 @@ var DEF_PORT = 3000;
 var QOS0 = 0;
 var QOS1 = 1;
 var QOS2 = 2;
-var SUB_CHANNEL_LIST = [];//已经订阅的频道或频道列表
 var MSG_MISSING_MESSAGE = 'Missing Message';
 var MSG_MISSING_CHANNEL = 'Missing Channel';
+var MSG_ERROR_CHANNEL = 'Topic 只支持英文数字下划线，长度不超过50个字符。';
 var MSG_MISSING_ALIAS = 'Missing Alias';
+var MSG_ERROR_ALIAS = 'Alias 只支持英文数字下划线，长度不超过50个字符。';
 var MSG_SUB_FAIL = '订阅失败';
 var MSG_MISSING_CALLBACK = 'Missing Callback';
 var MSG_SUB_REPEAT_ERROR = '不能重复订阅一个频道';
@@ -20,15 +21,15 @@ var MSG_NEED_CONNECT = '请先连接到 Yunba 服务';
 var MSG_NEED_SOCKET_CONNECT = 'JavaScript SDK 与消息服务器已经断开链接，请刷新页面重新链接。';
 var MSG_SESSION_IN_USE = 'the session id is in use';
 
-var __bind = function (fn, me) {
-    return function () {
-        return fn.apply(me, arguments);
-    };
+var __error = function (msg) {
+    __log(msg);
+    return false;
 };
 
-var __error = function (msg) {
-    console.log(msg);
-    return true;
+var __log = function (msg) {
+    if (typeof console != "undefined" && typeof console.log != "undefined") {
+        console.log(msg);
+    }
 };
 
 var __MessageIdUtil = {
@@ -130,7 +131,7 @@ Yunba = (function () {
         setup = setup || {};
         this.server = setup['server'] || DEF_SERVER;
         this.port = setup['port'] || DEF_PORT;
-		this.auto_reconnect = setup['auto_reconnect'] || false;
+        this.auto_reconnect = setup['auto_reconnect'] || false;
         if (!setup['appkey']) {
             return false;
         } else {
@@ -144,195 +145,194 @@ Yunba = (function () {
     Yunba.prototype.init = function (init_callback, rec_callback) {
         var me = this;
         init_callback = init_callback || function () {
+            };
+        rec_callback = rec_callback || function () {
+            };
+        me.message_cb = function () {
         };
-        rec_callback = rec_callback || function(){};
-        me.message_cb = function() {};
-//        me.receive_msg_cb_list = {};
-        me.puback_cb = me.puback_cb || {};
-        me.get_alias_cb = function() {};
-        me.set_alias_cb = function() {};
-        me.get_state_cb = function() {};
-        me.get_alias_list_cb = function() {};
-        me.get_topic_list_cb = function() {};
-        me.use_sessionid = false;
+        me.puback_cb = {};
+        me.suback_cb = {};
+        me.unsuback_cb = {};
+        me.get_alias_cb = function () {
+        };
+        me.set_alias_cb = function () {
+        };
+        me.get_state_cb = function () {
+        };
+        me.get_alias_list_cb = function () {
+        };
+        me.get_topic_list_cb = function () {
+        };
 
-		var socketio_connect = function () {
-        try {
-            console.log('js client start init...');
-            me.socket = io.connect('http://' + me.server + ':' + me.port, {'force new connection': true});
-            me.socket.on('connect', function () {
-                console.log('js client init success.');
-                me.socket_connected = true;
-                init_callback(true);
-            });
+        var socketio_connect = function () {
+            try {
+                __log('js client start init...');
+                me.socket = io.connect('http://' + me.server + ':' + me.port, {'force new connection': true});
+                me.socket.on('connect', function () {
+                    __log('js client init success.');
+                    me.socket_connected = true;
+                    init_callback(true);
+                });
 
-            me.socket.on('error',function(e){
-			    if (me.auto_reconnect) {
-				    setTimeout(function() {
-				        socketio_connect();
-					}, 1000);
-				} else {
-                    console.log('js client init error:',e);
-                    me.socket_connected=false;
-                    init_callback(false);
-				}
-            });
-
-            me.socket.on('disconnect', function () {
-			    if (me.auto_reconnect) {
-				    setTimeout(function() {
-				        socketio_connect();
-					}, 1000);
-				} else {
-                	console.log('js client disconnect.');
-                	me.socket_connected = false;
-                	init_callback(false);
-				}
-            });
-            me.socket.on('reconnect', function () {
-                console.log('js client reconnect.');
-                if (rec_callback) {
-                    rec_callback();
-                }
-            });
-            me.socket.on('reconnect_failed', function () {
-			    if (me.auto_reconnect) {
-				    setTimeout(function() {
-				        socketio_connect();
-					}, 1000);
-				} else {
-                    console.log('js client reconnect failed.');
-				}
-            });
-
-            me.socket.on('puback', function (result) {
-                if (result.success) {
-                    if (me.puback_cb && me.puback_cb[result.messageId]) {
-                        me.puback_cb[result.messageId](true, {messageId: result.messageId});
-                    }
-                } else {
-                    if (me.puback_cb && me.puback_cb[result.messageId]) {
-                        me.puback_cb[result.messageId](false, MSG_PUB_FAIL);
-                    }
-                    return __error(MSG_PUB_FAIL);
-                }
-            });
-
-            me.socket.on('message', function (data) {
-                me.message_cb(data);
-            });
-
-            me.socket.on('alias', function(data) {
-                me.get_alias_cb(data);
-            });
-
-            me.socket.on('set_alias_ack', function(data) {
-                me.set_alias_cb(data);
-            });
-
-            me.socket.on('suback', function (data) {
-                if (data.success) {
-                    //如果订阅成功，则监听来自服务端的message消息
-                    if (me.suback_cb)
-                        me.suback_cb(true);
-                } else {
-                    if (me.suback_cb)
-                        me.suback_cb(false, MSG_SUB_FAIL);
-                    return __error(MSG_SUB_FAIL);
-                }
-            });
-
-            me.socket.on('unsuback', function (result) {
-                if (result.success) {
-                    SUB_CHANNEL_LIST.remove(result.topic);
-                    if (me.unsuback_cb)
-                        me.unsuback_cb(true);
-                } else {
-                    if (me.unsuback_cb)
-                        me.unsuback_cb(false, MSG_UNSUB_FAIL);
-                    return __error(MSG_UNSUB_FAIL);
-                }
-            });
-
-            me.socket.on('connack', function (result) {
-                if (result.success) {
-                    me.connected = true;
-                    if (me.connack_cb)
-                        me.connack_cb(true, null, result.sessionid);
-
-                    if (me.use_sessionid && result.sessionid && !$.query.get('sessionid')) {
-                        me._update_query_string($.query.set('sessionid', result.sessionid).toString());
-                    }
-                } else {
-                    if (MSG_SESSION_IN_USE === result.msg) {
-                        // try again after 1s
-                        setTimeout(function() {
-                            init_callback(true);
+                me.socket.on('error', function (e) {
+                    if (me.auto_reconnect) {
+                        setTimeout(function () {
+                            socketio_connect();
                         }, 1000);
                     } else {
-                        if (me.connack_cb) {
-                            me.connack_cb(false, result.msg);
+                        __log('js client init error:', e);
+                        me.socket_connected = false;
+                        init_callback(false);
+                    }
+                });
+
+                me.socket.on('disconnect', function () {
+                    if (me.auto_reconnect) {
+                        setTimeout(function () {
+                            socketio_connect();
+                        }, 1000);
+                    } else {
+                        __log('js client disconnect.');
+                        me.socket_connected = false;
+                        init_callback(false);
+                    }
+                });
+                me.socket.on('reconnect', function () {
+                    __log('js client reconnect.');
+                    if (rec_callback) {
+                        rec_callback();
+                    }
+                });
+                me.socket.on('reconnect_failed', function () {
+                    if (me.auto_reconnect) {
+                        setTimeout(function () {
+                            socketio_connect();
+                        }, 1000);
+                    } else {
+                        __log('js client reconnect failed.');
+                    }
+                });
+
+                me.socket.on('puback', function (result) {
+                    if (result.success && me.puback_cb[result.messageId]) {
+                        me.puback_cb[result.messageId](true, {messageId: result.messageId});
+                    } else {
+                        if (me.puback_cb[result.messageId]) {
+                            me.puback_cb[result.messageId](false, MSG_PUB_FAIL);
+                        }
+                        return __error(MSG_PUB_FAIL);
+                    }
+                });
+
+                me.socket.on('message', function (data) {
+                    if (/\/p$/.test(data.topic)) {
+                        try {
+                            data.presence = JSON.parse(data.msg);
+                        } catch (err) {
+                            __error(err);
+                            data.err = err;
+                        }
+                    }
+                    me.message_cb(data);
+                });
+
+                me.socket.on('alias', function (data) {
+                    me.get_alias_cb(data);
+                });
+
+                me.socket.on('set_alias_ack', function (data) {
+                    me.set_alias_cb(data);
+                });
+
+                me.socket.on('suback', function (result) {
+                    if (result.success) {
+                        me.suback_cb[result.messageId](true);
+                    } else {
+                        me.suback_cb[result.messageId](false, MSG_SUB_FAIL);
+                        return __error(MSG_SUB_FAIL);
+                    }
+                });
+
+                me.socket.on('unsuback', function (result) {
+                    if (result.success) {
+                        me.unsuback_cb[result.messageId](true);
+                    } else {
+                        me.unsuback_cb[result.messageId](false, MSG_UNSUB_FAIL);
+                        return __error(MSG_UNSUB_FAIL);
+                    }
+                });
+
+                me.socket.on('connack', function (result) {
+                    if (result.success) {
+                        me.connected = true;
+                        if (me.connack_cb)
+                            me.connack_cb(true, null, result.sessionid);
+                    } else {
+                        if (MSG_SESSION_IN_USE === result.msg) {
+                            // try again after 1s
+                            setTimeout(function () {
+                                init_callback(true);
+                            }, 1000);
+                        } else {
+                            if (me.connack_cb) {
+                                me.connack_cb(false, result.msg);
+                            }
+                        }
+                    }
+                });
+
+                me.socket.on('get_state_ack', function (data) {
+                    me.get_state_cb(data);
+                });
+
+                me.socket.on('get_topic_list_ack', function (result) {
+                    if (result.success) {
+                        if (me.get_topic_list_cb) {
+                            me.get_topic_list_cb(true, {
+                                topics: result.data.topics
+                            });
                         }
 
-                        if (me.use_sessionid && $.query.get('sessionid')) {
-                            me._update_query_string($.query.REMOVE('sessionid').toString());
+                    } else {
+                        if (me.get_topic_list_cb) {
+                            me.get_topic_list_cb(false, {
+                                error_msg: result.error_msg,
+                                messageId: result.messageId
+                            });
                         }
                     }
-                }
-            });
+                });
 
-            me.socket.on('get_state_ack', function(data) {
-                me.get_state_cb(data);
-            });
+                me.socket.on('get_alias_list_ack', function (result) {
+                    if (result.success) {
+                        if (me.get_alias_list_cb) {
+                            me.get_alias_list_cb(true, {
+                                alias: result.data.alias
+                            });
+                        }
 
-            me.socket.on('get_topic_list_ack', function (result) {
-                if (result.success) {
-                    if (me.get_topic_list_cb) {
-                        me.get_topic_list_cb(true, {
-                            topics: result.data.topics
-                        });
+                    } else {
+                        if (me.get_alias_list_cb) {
+                            me.get_alias_list_cb(false, {
+                                error_msg: result.error_msg,
+                                messageId: result.messageId
+                            });
+                        }
                     }
+                });
 
+            } catch (err) {
+                if (me.auto_reconnect) {
+                    setTimeout(function () {
+                        socketio_connect();
+                    }, 1000);
                 } else {
-                    if (me.get_topic_list_cb) {
-                        me.get_topic_list_cb(false, {
-                            error_msg: result.error_msg,
-                            messageId: result.messageId
-                        });
-                    }
+                    return __error(MSG_CONNECT_FAIL) && init_callback(false, MSG_CONNECT_FAIL);
                 }
-            });
+            }
+        };
 
-            me.socket.on('get_alias_list_ack', function (result) {
-                if (result.success) {
-                    if (me.get_alias_list_cb) {
-                        me.get_alias_list_cb(true, {
-                            alias: result.data.alias
-                        });
-                    }
-
-                } else {
-                    if (me.get_alias_list_cb) {
-                        me.get_alias_list_cb(false, {
-                            error_msg: result.error_msg,
-                            messageId: result.messageId
-                        });
-                    }
-                }
-            });
-
-        } catch (err) {
-		    if (me.auto_reconnect) {
-				setTimeout(function() {
-				    socketio_connect();
-			    }, 1000);
-		    } else {
-                return __error(MSG_CONNECT_FAIL) && init_callback(false, MSG_CONNECT_FAIL);
-			}
-        }
-		};
-		
-		socketio_connect();
+        socketio_connect();
     };
 
     Yunba.prototype.connect = function (callback) {
@@ -341,7 +341,6 @@ Yunba = (function () {
             return false;
         }
         this.connack_cb = callback;
-        this.use_sessionid = false;
 
         try {
             if (__CookieUtil.isSupport()) {
@@ -350,68 +349,27 @@ Yunba = (function () {
                     customid = "uid_" + (new Date()).getTime() + parseInt(Math.random() * 10000);
                     __CookieUtil.set('YUNBA_CUSTOMID_COOKIE', customid, new Date('January 1, 2100'));
                 }
-                this.socket.emit('connect', {appkey: this.appkey, customid: customid});
+                this.socket.emit('connect_v2', {appkey: this.appkey, customid: customid});
 
             } else {
-                this.socket.emit('connect', {appkey: this.appkey});
+                this.socket.emit('connect_v2', {appkey: this.appkey});
             }
 
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
-    Yunba.prototype.connect_v2 = function (callback) {
-        if(this.socket_connected === false){
-            return false;
-        }
-        this.connack_cb = callback;
-        this.use_sessionid = true;
-
-        var connect_session = $.query.get('sessionid');
-
-        try {
-            if (connect_session) {
-                this.socket.emit('connect', {sessionid: connect_session});
-            } else if (__CookieUtil.isSupport()) {
-                var customid = __CookieUtil.get('YUNBA_CUSTOMID_COOKIE');
-                if (!customid) {
-                    customid = "uid_" + (new Date()).getTime() + parseInt(Math.random() * 10000);
-                    __CookieUtil.set('YUNBA_CUSTOMID_COOKIE', customid, new Date('January 1, 2100'));
-                }
-                this.socket.emit('connect', {appkey: this.appkey, customid: customid});
-            } else {
-                this.socket.emit('connect', {appkey: this.appkey});
-            }
-        } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
-        }
-    };
-
-    Yunba.prototype.connect_by_sessionid = function(sessionid, callback) {
-        if(this.socket_connected === false){
-            return false;
-        }
-        this.connack_cb = callback;
-        this.use_sessionid = true;
-
-        try {
-            this.socket.emit('connect', {sessionid: sessionid});
-        } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
-        }
-    };
-
-    Yunba.prototype.connect_by_customid = function(customid, callback) {
-        if(this.socket_connected === false){
+    Yunba.prototype.connect_by_customid = function (customid, callback) {
+        if (this.socket_connected === false) {
             return false;
         }
         this.connack_cb = callback;
 
         try {
-            this.socket.emit('connect', {appkey: this.appkey, customid: customid});
+            this.socket.emit('connect_v2', {appkey: this.appkey, customid: customid});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
@@ -426,7 +384,7 @@ Yunba = (function () {
             self.connected = false;
             callback && callback(true);
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
@@ -434,39 +392,58 @@ Yunba = (function () {
         this.message_cb = cb;
     };
 
-    Yunba.prototype.subscribe = function (args, cb1, cb2) {
+    Yunba.prototype.subscribe = function (args, callback) {
 
         if (this.socket_connected === false) {
             return false;
         }
 
-        var self = this;
-
-        var channel = args['topic'];
+        var topic = args['topic'];
         var qos = args['qos'] || QOS1;
-        this.suback_cb = args['callback'] || cb1 || function () {
-        };
+        var msgId = args['messageId'] || __MessageIdUtil.get();
+        this.suback_cb[msgId.toString()] = args['callback'] || callback || function () {
+            };
 
         if (!this.connected) {
-            return __error(MSG_NEED_CONNECT) && this.suback_cb(false, MSG_NEED_CONNECT);
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
         }
 
-        if (!this.suback_cb) return __error(MSG_MISSINGl_CALLBACK);
-        if (!channel)  return __error(MSG_MISSING_CHANNEL) && this.suback_cb(false, MSG_MISSING_CHANNEL);
-
-        //检查是否已经订阅该频道
-        if (SUB_CHANNEL_LIST.contain(channel)) {
-//            return __error(MSG_SUB_REPEAT_ERROR) && this.suback_cb(false, MSG_SUB_REPEAT_ERROR);
-        } else {
-            SUB_CHANNEL_LIST.push(channel);
+        if (!this._validate_topic(topic, callback)) {
+            return false;
         }
 
         try {
-            this.socket.emit('subscribe', { 'topic': channel, 'qos': qos });
+            this.socket.emit('subscribe', {'topic': topic, 'qos': qos, 'messageId': msgId});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && this.suback_cb(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
+        }
+    };
+
+    Yunba.prototype.subscribe_presence = function (args, callback) {
+
+        if (this.socket_connected === false) {
+            return false;
         }
 
+        var topic = args['topic'];
+        var qos = args['qos'] || QOS1;
+        var msgId = args['messageId'] || __MessageIdUtil.get();
+        this.suback_cb[msgId.toString()] = args['callback'] || callback || function () {
+            };
+
+        if (!this.connected) {
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+        }
+
+        if (!this._validate_topic(topic, callback)) {
+            return false;
+        }
+
+        try {
+            this.socket.emit('subscribe', {'topic': topic + '/p', 'qos': qos, 'messageId': msgId});
+        } catch (err) {
+            return __error(err) && callback(false, err);
+        }
     };
 
     Yunba.prototype.unsubscribe = function (args, callback) {
@@ -475,32 +452,29 @@ Yunba = (function () {
             return false;
         }
 
-        this.unsuback_cb = callback;
-
         if (!this.connected) {
             return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
         }
 
-        var channel = args['topic'];
-        var callback = args['callback'] || callback || function () {
+        var topic = args['topic'];
+        var msgId = args['messageId'] || __MessageIdUtil.get();
+        this.unsuback_cb[msgId.toString()] = args['callback'] || callback || function () {
             };
 
-        if (!channel)  return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
-
-        //检查是否已经订阅该频道
-        if (!SUB_CHANNEL_LIST.contain(channel)) {
-            return __error(MSG_NO_THIS_CHANNEL) && callback(false, MSG_NO_THIS_CHANNEL);
+        if (!this._validate_topic(topic, callback)) {
+            return false;
         }
+
         try {
-            this.socket.emit('unsubscribe', { 'topic': channel});
+            this.socket.emit('unsubscribe', {'topic': topic, 'messageId': msgId});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
-    Yunba.prototype.publish = function (args, callback) {
 
-        if(this.socket_connected === false){
+    Yunba.prototype.unsubscribe_presence = function (args, callback) {
+        if (this.socket_connected === false) {
             return false;
         }
 
@@ -508,7 +482,33 @@ Yunba = (function () {
             return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
         }
 
-        var channel = args['topic'] || args['channel'];
+        var topic = args['topic'];
+        var msgId = args['messageId'] || __MessageIdUtil.get();
+        this.unsuback_cb[msgId.toString()] = args['callback'] || callback || function () {
+            };
+
+        if (!this._validate_topic(topic, callback)) {
+            return false;
+        }
+
+        try {
+            this.socket.emit('unsubscribe', {'topic': topic + '/p', 'messageId': msgId});
+        } catch (err) {
+            return __error(err) && callback(false, err);
+        }
+    };
+
+    Yunba.prototype.publish = function (args, callback) {
+
+        if (this.socket_connected === false) {
+            return false;
+        }
+
+        if (!this.connected) {
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+        }
+
+        var topic = args['topic'] || args['channel'];
         var msg = args['msg'];
         var qos = args['qos'] || QOS1;
         var msgId = args['messageId'] || __MessageIdUtil.get();
@@ -518,14 +518,16 @@ Yunba = (function () {
         var callback = args['callback'] || callback || function () {
             };
 
-        if (!channel) return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
-        if (!msg)     return __error(MSG_MISSING_MESSAGE) && callback(false, MSG_MISSING_MESSAGE);
-
+        if (!this._validate_topic(topic, callback)) {
+            return false;
+        } else if (!this._validate_message(msg, callback)) {
+            return false;
+        }
 
         try {
-            this.socket.emit('publish', {'topic': channel, 'msg': msg, 'qos': qos ,'messageId': msgId });
+            this.socket.emit('publish', {'topic': topic, 'msg': msg, 'qos': qos, 'messageId': msgId});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
@@ -544,30 +546,55 @@ Yunba = (function () {
         var opts = args['opts'] || {
                 'qos': QOS1
             };
-        opts['messageId'] = opts['messageId'] ? opts['messageId'] :  __MessageIdUtil.get();
+        opts['messageId'] = opts['messageId'] || __MessageIdUtil.get();
 
         this.puback_cb[opts['messageId'].toString()] = callback;
 
         var callback = args['callback'] || callback || function () {
             };
 
-        if (!topic) {
-            return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
-        } else if (!msg) {
-            return __error(MSG_MISSING_MESSAGE) && callback(false, MSG_MISSING_MESSAGE);
+        if (!this._validate_topic(topic, callback)) {
+            return false;
+        } else if (!this._validate_message(msg, callback)) {
+            return false;
         }
 
         try {
             this.socket.emit('publish2', {'topic': topic, 'msg': msg, 'opts': opts});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
     };
 
     Yunba.prototype.publish_to_alias = function (args, callback) {
-        args['messageId'] = args['messageId'] || __MessageIdUtil.get();
-        this.puback_cb[args['messageId'].toString()] = callback;
-        this.socket.emit('publish_to_alias', args);
+
+        if (this.socket_connected === false) {
+            return false;
+        }
+
+        if (!this.connected) {
+            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+        }
+
+        var alias = args['alias'];
+        var msg = args['msg'];
+        var messageId = args['messageId'] || __MessageIdUtil.get();
+        this.puback_cb[messageId.toString()] = callback;
+
+        var callback = args['callback'] || callback || function () {
+            };
+
+        if (!this._validate_alias(alias, callback)) {
+            return false;
+        } else if (!this._validate_message(msg, callback)) {
+            return false;
+        }
+
+        try {
+            this.socket.emit('publish_to_alias', {'alias': alias, 'msg': msg, 'messageId': messageId});
+        } catch (err) {
+            return __error(err) && callback(false, err);
+        }
     };
 
     Yunba.prototype.publish2_to_alias = function (args, callback) {
@@ -580,36 +607,37 @@ Yunba = (function () {
             return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
         }
 
-        this.publish2_ack_cb = callback;
-
         var alias = args['alias'];
         var msg = args['msg'];
         var opts = args['opts'] || {
                 'qos': QOS1
             };
-        opts['messageId'] = opts['messageId'] ? opts['messageId'] :  __MessageIdUtil.get();
+        opts['messageId'] = opts['messageId'] || __MessageIdUtil.get();
         this.puback_cb[opts['messageId'].toString()] = callback;
 
         var callback = args['callback'] || callback || function () {
             };
 
-        if (!alias) {
-            return __error(MSG_MISSING_ALIAS) && callback(false, MSG_MISSING_ALIAS);
-        } else if (!msg) {
-            return __error(MSG_MISSING_ALIAS) && callback(false, MSG_MISSING_ALIAS);
+        if (!this._validate_alias(alias, callback)) {
+            return false;
+        } else if (!this._validate_message(msg, callback)) {
+            return false;
         }
 
         try {
             this.socket.emit('publish2_to_alias', {'alias': alias, 'msg': msg, 'opts': opts});
         } catch (err) {
-            return __error(MSG_SOCKET_EMIT_ERROR) && callback(false, MSG_SOCKET_EMIT_ERROR);
+            return __error(err) && callback(false, err);
         }
-
     };
 
     Yunba.prototype.set_alias = function (args, callback) {
+        var alias = args['alias'];
+        if (!this._validate_alias(alias, callback)) {
+            return false;
+        }
         this.set_alias_cb = callback;
-        this.socket.emit('set_alias', args);
+        this.socket.emit('set_alias', {'alias': alias});
     };
 
     Yunba.prototype.get_alias = function (callback) {
@@ -630,6 +658,31 @@ Yunba = (function () {
     Yunba.prototype.get_alias_list = function (topic, callback) {
         this.get_alias_list_cb = callback;
         this.socket.emit('get_alias_list', {'topic': topic});
+    };
+
+    Yunba.prototype._validate_topic = function (topic, callback) {
+        if (!topic) {
+            return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
+        } else if (topic.length > 50 || !/^([a-zA-Z0-9_]*)$/.test(topic)) {
+            return __error(MSG_ERROR_CHANNEL) && callback(false, MSG_ERROR_CHANNEL);
+        }
+        return true;
+    };
+
+    Yunba.prototype._validate_alias = function (alias, callback) {
+        if (!alias) {
+            return __error(MSG_MISSING_ALIAS) && callback(false, MSG_MISSING_ALIAS);
+        } else if (alias.length > 50 || !/^([a-zA-Z0-9_]*)$/.test(alias)) {
+            return __error(MSG_ERROR_ALIAS) && callback(false, MSG_ERROR_ALIAS);
+        }
+        return true;
+    };
+
+    Yunba.prototype._validate_message = function (message, callback) {
+        if (!message) {
+            return __error(MSG_MISSING_MESSAGE) && callback(false, MSG_MISSING_MESSAGE);
+        }
+        return true;
     };
 
     Yunba.prototype._update_query_string = function (new_query_string) {

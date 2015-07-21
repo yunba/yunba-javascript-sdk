@@ -3,16 +3,18 @@
 <head>
   <title>Yunba JavaScript Over Socket.IO Demo</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-  <script type="text/javascript" src="javascripts/jquery-1.10.2.min.js"></script>
-  <script type="text/javascript" src="javascripts/jquery.query-object.js"></script>
-  <script type="text/javascript" src="javascripts/socket.io.js"></script>
+  <!-[if lt IE 7]>
+  <script type="text/javascript" src="javascripts/json2.js"></script>
+  <![endif]->
+  <script type="text/javascript" src="javascripts/socket.io-1.3.5.min.js"></script>
   <script type="text/javascript" src="../yunba-1.0.1.js"></script>
+  <script type="text/javascript" src="javascripts/jquery-1.10.2.min.js"></script>
   <script>
-    var yunba = new Yunba({server: 'sock.yunba.io', port: 3000, appkey: '52fcc04c4dc903d66d6f8f92'});
+    var yunba = new Yunba({appkey: '52fcc04c4dc903d66d6f8f92'});
     yunba.init(function (success) {
       if (success) {
         $('#msg').html('<div style="color:green">已连接上 socket</div>');
-        $('#msg').append('<div style="color:green">SocketId: ' + yunba.socket.socket.sessionid) + '</div>';
+        $('#msg').append('<div style="color:green">SocketId: ' + yunba.socket.id) + '</div>';
 
           mqtt_connect();
       }
@@ -69,6 +71,21 @@
       });
     }
 
+    function mqtt_subscribe_presence() {
+        if ($('#topic_sub').val() == '') {
+            alert('请输入频道！');
+            return false;
+        }
+        var topic = $('#topic_sub').val();
+        yunba.subscribe_presence({'topic': topic }, function (success, msg) {
+            if (success) {
+                $('#topic_list').append('<b id="topic_id_' + topic + '/p' + '">' + topic + '/p' + '</b>');
+            } else {
+                alert(msg);
+            }
+        });
+    }
+
     function mqtt_unsubscribe() {
 
       if ($('#topic_sub').val() == '') {
@@ -84,6 +101,23 @@
           alert(data);
         }
       });
+    }
+
+    function mqtt_unsubscribe_presence() {
+
+        if ($('#topic_sub').val() == '') {
+            alert('请输入频道！');
+            return false;
+        }
+        var topic = $('#topic_sub').val();
+
+        yunba.unsubscribe_presence({'topic': topic}, function (success, data) {
+            if (success) {
+                $('#topic_id_' + topic + '/p').remove();
+            } else {
+                alert(data);
+            }
+        });
     }
 
     function mqtt_publish() {
@@ -144,8 +178,6 @@
         }
 
         pub2Msg['opts'] = opts;
-
-        console.log(pub2Msg);
 
         yunba.publish2(pub2Msg, function (success, msg) {
             if (success) {
@@ -213,8 +245,6 @@
 
         pub2AliasMsg['opts'] = opts;
 
-        console.log(pub2AliasMsg);
-
         yunba.publish2_to_alias(pub2AliasMsg, function (success, msg) {
             if (success) {
 
@@ -232,19 +262,17 @@
 
         var alias = $('#alias_set').val();
 
-        yunba.set_alias({'alias': alias}, function (success, msg) {
-            if (success) {
-                console.log('set alias succ');
+        yunba.set_alias({'alias': alias}, function (data) {
+            if (data.success) {
                 alert('set alias succ');
             } else {
-                alert(msg);
+                alert(data.msg);
             }
         })
     }
 
     function get_alias() {
         yunba.get_alias( function(data) {
-            console.log('get alias succ');
             $('#msg_end').before('get alias：' + data.alias);
             $('#msg_end').before("\<br\/\>");
             msg_end.scrollIntoView();
@@ -254,7 +282,6 @@
     function get_state() {
         var alias = $('#get_state').val();
         yunba.get_state(alias, function (data) {
-            console.log('get state succ');
             if (data.success) {
                 $('#msg_end').before('get state：' + data.data);
             } else {
@@ -273,14 +300,15 @@
 
                 var topicList = "";
 
-                data.topics.forEach(function (topic) {
+                for (var index = 0; index < data.topics.length; index ++) {
+                    var topic = data.topics[index];
                     topicList = topicList + topic + "  ";
-                });
+                }
 
                 $('#msg_end').before('get_topic_list：' + topicList);
                 $('#msg_end').before("\<br\/\>");
             } else {
-                console.log(data.error_msg);
+                alert(data.error_msg);
             }
         });
     }
@@ -293,14 +321,15 @@
 
                 var aliasList = "";
 
-                data.alias.forEach(function (alias) {
+                for (var index = 0; index < data.alias.length; index ++) {
+                    var alias = data.alias[index];
                     aliasList = aliasList + alias + "  ";
-                });
+                }
 
                 $('#msg_end').before('get_alias_list：' + aliasList);
                 $('#msg_end').before("\<br\/\>");
             } else {
-                console.log(data.error_msg);
+                alert(data.error_msg);
             }
         });
     }
@@ -359,6 +388,8 @@
   <input type="text" placeholder="输入频道..." id="topic_sub"/>
   <input type="button" value="Subscribe" onclick="mqtt_subscribe();"/>
   <input type="button" value="Unsubscribe" onclick="mqtt_unsubscribe();"/>
+  <!--<input type="button" value="Subscribe_Presence" onclick="mqtt_subscribe_presence();"/>-->
+  <!--<input type="button" value="Unsubscribe_Presence" onclick="mqtt_unsubscribe_presence();"/>-->
   <br/>
 
   <div style="float:left;width:50%;">
