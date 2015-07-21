@@ -259,11 +259,11 @@
 
         var alias = $('#alias_set').val();
 
-        yunba.set_alias({'alias': alias}, function (success, msg) {
-            if (success) {
+        yunba.set_alias({'alias': alias}, function (data) {
+            if (data.success) {
                 alert('set alias succ');
             } else {
-                alert(msg);
+                alert(data.msg);
             }
         })
     }
@@ -384,8 +384,8 @@
   <input type="text" placeholder="输入频道..." id="topic_sub"/>
   <input type="button" value="Subscribe" onclick="mqtt_subscribe();"/>
   <input type="button" value="Unsubscribe" onclick="mqtt_unsubscribe();"/>
-  <input type="button" value="Subscribe_Presence" onclick="mqtt_subscribe_presence();"/>
-  <input type="button" value="Unsubscribe_Presence" onclick="mqtt_unsubscribe_presence();"/>
+  <!--<input type="button" value="Subscribe_Presence" onclick="mqtt_subscribe_presence();"/>-->
+  <!--<input type="button" value="Unsubscribe_Presence" onclick="mqtt_unsubscribe_presence();"/>-->
   <br/>
 
   <div style="float:left;width:50%;">

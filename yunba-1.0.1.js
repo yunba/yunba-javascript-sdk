@@ -1,8 +1,6 @@
 var Yunba;
-//var DEF_SERVER = 'sock.yunba.io';
-//var DEF_PORT = 3000;
-var DEF_SERVER = 'abj-mongo-2.yunba.io';
-var DEF_PORT = 5555;
+var DEF_SERVER = 'sock.yunba.io';
+var DEF_PORT = 3000;
 var QOS0 = 0;
 var QOS1 = 1;
 var QOS2 = 2;
