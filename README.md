@@ -62,9 +62,9 @@ IE7 以下版本会报错对象不支持 "stringify" 属性或方法，在导入
 [https://github.com/douglascrockford/JSON-js](https://github.com/douglascrockford/JSON-js)
 
 ```javascript
-<!-[if lt IE 7]>
+<!--[if lte IE 7]>
 <script  type='text/javascript' src='/javascripts/json2.js'></script>
-<![endif]->
+<![endif]-->
 ```
 
 # 试用例子
