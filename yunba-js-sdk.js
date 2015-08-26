@@ -153,11 +153,20 @@ Yunba = (function () {
         me.puback_cb = {};
         me.suback_cb = {};
         me.unsuback_cb = {};
-        me.set_alias_cb = {};
-        me.get_alias_cb = {};
-        me.get_state_cb = {};
-        me.get_alias_list_cb = {};
-        me.get_topic_list_cb = {};
+        me.get_alias_cb = function () {
+        };
+        me.set_alias_cb = function () {
+        };
+        me.get_state_cb = function () {
+        };
+        me.get_alias_list_cb = function () {
+        };
+        me.get_topic_list_cb = function () {
+        };
+
+        me.get_state_cb2 = {};
+        me.get_alias_list_cb2 = {};
+        me.get_topic_list_cb2 = {};
 
         var socketio_connect = function () {
             try {
@@ -232,15 +241,11 @@ Yunba = (function () {
                 });
 
                 me.socket.on('alias', function (data) {
-                    if (me.get_alias_cb[data.messageId]) {
-                        me.get_alias_cb[data.messageId](data);
-                    }
+                    me.get_alias_cb(data);
                 });
 
                 me.socket.on('set_alias_ack', function (data) {
-                    if (me.set_alias_cb[data.messageId]) {
-                        me.set_alias_cb[data.messageId](data);
-                    }
+                    me.set_alias_cb(data);
                 });
 
                 me.socket.on('suback', function (result) {
@@ -280,34 +285,58 @@ Yunba = (function () {
                     }
                 });
 
-                me.socket.on('get_state_ack', function (data) {
-                    if (me.get_state_cb[data.messageId]) {
-                        me.get_state_cb[data.messageId](data);
+                me.socket.on('get_state_ack2', function (ack) {
+                    if (ack.success) {
+                        var data = JSON.parse(ack.data);
+                        me.get_state_cb2[data.alias]({
+                            success: true,
+                            data: data.status,
+                            alias: data.alias
+                        });
+                    } else {
+                        var data = JSON.parse(ack.error_msg);
+                        me.get_state_cb({
+                            success: false,
+                            error_msg: data.msg,
+                            messageId: ack.messageId
+                        });
                     }
                 });
 
-                me.socket.on('get_topic_list_ack', function (result) {
-                    if (result.success && me.get_topic_list_cb[result.messageId]) {
-                        me.get_topic_list_cb[result.messageId](true, {
-                            topics: result.data.topics
-                        });
-                    } else if (me.get_topic_list_cb[result.messageId]) {
-                        me.get_topic_list_cb[result.messageId](false, {
-                            error_msg: result.error_msg,
-                            messageId: result.messageId
+                me.socket.on('get_topic_list_ack2', function (ack) {
+                    if (ack.success) {
+                        if (me.get_topic_list_cb2[ack.data.alias]) {
+                            me.get_topic_list_cb2[ack.data.alias](true, {
+                                topics: ack.data.topics
+                            });
+                        } else {
+                            me.get_topic_list_cb(true, {
+                                topics: ack.data.topics
+                            });
+                        }
+                    } else {
+                        me.get_topic_list_cb(false, {
+                            error_msg: ack.error_msg,
+                            messageId: ack.messageId
                         });
                     }
                 });
 
-                me.socket.on('get_alias_list_ack', function (result) {
-                    if (result.success && me.get_alias_list_cb[result.messageId]) {
-                        me.get_alias_list_cb[result.messageId](true, {
-                            alias: result.data.alias
-                        });
-                    } else if (me.get_alias_list_cb[result.messageId]) {
-                        me.get_alias_list_cb[result.messageId](false, {
-                            error_msg: result.error_msg,
-                            messageId: result.messageId
+                me.socket.on('get_alias_list_ack2', function (ack) {
+                    if (ack.success) {
+                        if (me.get_alias_list_cb2[ack.data.topic]) {
+                            me.get_alias_list_cb2[ack.data.topic](true, {
+                                alias: ack.data.alias
+                            });
+                        } else {
+                            me.get_alias_list_cb(true, {
+                                alias: ack.data.alias
+                            });
+                        }
+                    } else {
+                        me.get_alias_list_cb(false, {
+                            error_msg: ack.error_msg,
+                            messageId: ack.messageId
                         });
                     }
                 });
@@ -624,65 +653,46 @@ Yunba = (function () {
 
     Yunba.prototype.set_alias = function (args, callback) {
         var alias = args['alias'];
-        var messageId = args['messageId'] || __MessageIdUtil.get();
         if (!this._validate_alias(alias, callback)) {
             return false;
         }
-        this.set_alias_cb[messageId.toString()] = callback || function () {
-            };
-        this.socket.emit('set_alias', {'alias': alias, 'messageId': messageId});
+        this.set_alias_cb = callback;
+        this.socket.emit('set_alias', {'alias': alias});
     };
 
     Yunba.prototype.get_alias = function (callback) {
-        var messageId = __MessageIdUtil.get();
-        this.get_alias_cb[messageId] = callback || function () {
-            };
-        this.socket.emit('get_alias', {'messageId': messageId});
+        this.get_alias_cb = callback;
+        this.socket.emit('get_alias');
     };
 
     Yunba.prototype.get_state = function (alias, callback) {
-        var messageId = __MessageIdUtil.get();
-        this.get_state_cb[messageId] = callback || function () {
+        if (alias) {
+            this.get_state_cb2[alias] = callback || function () {
+                };
+        }
+        this.get_state_cb = callback || function () {
             };
-        this.socket.emit('get_state', {'alias': alias, 'messageId': messageId});
-    };
-
-    Yunba.prototype.get_state2 = function (args, callback) {
-        var alias = args['alias'];
-        var messageId = args['messageId'] || __MessageIdUtil.get();
-        this.get_state_cb[messageId.toString()] = callback || function () {
-            };
-        this.socket.emit('get_state', {'alias': alias, 'messageId': messageId});
+        this.socket.emit('get_state2', {'alias': alias});
     };
 
     Yunba.prototype.get_topic_list = function (alias, callback) {
-        var messageId = __MessageIdUtil.get();
-        this.get_topic_list_cb[messageId] = callback || function () {
+        if (alias) {
+            this.get_topic_list_cb2[alias] = callback || function () {
+                };
+        }
+        this.get_topic_list_cb = callback || function () {
             };
-        this.socket.emit('get_topic_list', {'alias': alias, 'messageId': messageId});
-    };
-
-    Yunba.prototype.get_topic_list2 = function (args, callback) {
-        var alias = args['alias'];
-        var messageId = args['messageId'] || __MessageIdUtil.get();
-        this.get_topic_list_cb[messageId.toString()] = callback || function () {
-            };
-        this.socket.emit('get_topic_list', {'alias': alias, 'messageId': messageId});
+        this.socket.emit('get_topic_list2', {'alias': alias});
     };
 
     Yunba.prototype.get_alias_list = function (topic, callback) {
-        var messageId = __MessageIdUtil.get();
-        this.get_alias_list_cb[messageId] = callback || function () {
+        if (topic) {
+            this.get_alias_list_cb2[topic] = callback || function () {
+                };
+        }
+        this.get_alias_list_cb = callback || function () {
             };
-        this.socket.emit('get_alias_list', {'topic': topic, 'messageId': messageId});
-    };
-
-    Yunba.prototype.get_alias_list2 = function (args, callback) {
-        var topic = args['topic'];
-        var messageId = args['messageId'] || __MessageIdUtil.get();
-        this.get_alias_list_cb[messageId.toString()] = callback || function () {
-            };
-        this.socket.emit('get_alias_list', {'topic': topic, 'messageId': messageId});
+        this.socket.emit('get_alias_list2', {'topic': topic});
     };
 
     Yunba.prototype._validate_topic = function (topic, callback) {

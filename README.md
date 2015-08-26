@@ -4,7 +4,7 @@
 [http://yunba.io/docs2/Javascript_SDK/](http://yunba.io/docs2/Javascript_SDK/)
 
 # 依赖
-[socket.io.js](examples/javascripts/socket.io-1.3.5.min.js)
+[socket.io-1.3.5.js](examples/javascripts/socket.io-1.3.5.min.js)
 
 # 说明
 
