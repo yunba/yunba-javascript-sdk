@@ -164,6 +164,10 @@ Yunba = (function () {
         me.get_topic_list_cb = function () {
         };
 
+        me.get_state_cb2 = {};
+        me.get_alias_list_cb2 = {};
+        me.get_topic_list_cb2 = {};
+
         var socketio_connect = function () {
             try {
                 __log('js client start init...');
@@ -281,43 +285,59 @@ Yunba = (function () {
                     }
                 });
 
-                me.socket.on('get_state_ack', function (data) {
-                    me.get_state_cb(data);
-                });
-
-                me.socket.on('get_topic_list_ack', function (result) {
-                    if (result.success) {
-                        if (me.get_topic_list_cb) {
-                            me.get_topic_list_cb(true, {
-                                topics: result.data.topics
-                            });
-                        }
-
+                me.socket.on('get_state_ack2', function (ack) {
+                    if (ack.success) {
+                        var data = JSON.parse(ack.data);
+                        me.get_state_cb2[data.alias]({
+                            success: true,
+                            data: data.status,
+                            alias: data.alias
+                        });
                     } else {
-                        if (me.get_topic_list_cb) {
-                            me.get_topic_list_cb(false, {
-                                error_msg: result.error_msg,
-                                messageId: result.messageId
-                            });
-                        }
+                        var data = JSON.parse(ack.error_msg);
+                        me.get_state_cb({
+                            success: false,
+                            error_msg: data.msg,
+                            messageId: ack.messageId
+                        });
                     }
                 });
 
-                me.socket.on('get_alias_list_ack', function (result) {
-                    if (result.success) {
-                        if (me.get_alias_list_cb) {
-                            me.get_alias_list_cb(true, {
-                                alias: result.data.alias
+                me.socket.on('get_topic_list_ack2', function (ack) {
+                    if (ack.success) {
+                        if (me.get_topic_list_cb2[ack.data.alias]) {
+                            me.get_topic_list_cb2[ack.data.alias](true, {
+                                topics: ack.data.topics
+                            });
+                        } else {
+                            me.get_topic_list_cb(true, {
+                                topics: ack.data.topics
                             });
                         }
-
                     } else {
-                        if (me.get_alias_list_cb) {
-                            me.get_alias_list_cb(false, {
-                                error_msg: result.error_msg,
-                                messageId: result.messageId
+                        me.get_topic_list_cb(false, {
+                            error_msg: ack.error_msg,
+                            messageId: ack.messageId
+                        });
+                    }
+                });
+
+                me.socket.on('get_alias_list_ack2', function (ack) {
+                    if (ack.success) {
+                        if (me.get_alias_list_cb2[ack.data.topic]) {
+                            me.get_alias_list_cb2[ack.data.topic](true, {
+                                alias: ack.data.alias
+                            });
+                        } else {
+                            me.get_alias_list_cb(true, {
+                                alias: ack.data.alias
                             });
                         }
+                    } else {
+                        me.get_alias_list_cb(false, {
+                            error_msg: ack.error_msg,
+                            messageId: ack.messageId
+                        });
                     }
                 });
 
@@ -646,18 +666,33 @@ Yunba = (function () {
     };
 
     Yunba.prototype.get_state = function (alias, callback) {
-        this.get_state_cb = callback;
-        this.socket.emit('get_state', {'alias': alias});
+        if (alias) {
+            this.get_state_cb2[alias] = callback || function () {
+                };
+        }
+        this.get_state_cb = callback || function () {
+            };
+        this.socket.emit('get_state2', {'alias': alias});
     };
 
     Yunba.prototype.get_topic_list = function (alias, callback) {
-        this.get_topic_list_cb = callback;
-        this.socket.emit('get_topic_list', {'alias': alias});
+        if (alias) {
+            this.get_topic_list_cb2[alias] = callback || function () {
+                };
+        }
+        this.get_topic_list_cb = callback || function () {
+            };
+        this.socket.emit('get_topic_list2', {'alias': alias});
     };
 
     Yunba.prototype.get_alias_list = function (topic, callback) {
-        this.get_alias_list_cb = callback;
-        this.socket.emit('get_alias_list', {'topic': topic});
+        if (topic) {
+            this.get_alias_list_cb2[topic] = callback || function () {
+                };
+        }
+        this.get_alias_list_cb = callback || function () {
+            };
+        this.socket.emit('get_alias_list2', {'topic': topic});
     };
 
     Yunba.prototype._validate_topic = function (topic, callback) {
