@@ -715,10 +715,12 @@ var Yunba = (function () {
     Yunba.prototype._validate_topic = function (topic, callback) {
         if (!topic) {
             __error(MSG_MISSING_CHANNEL);
-            return callback(false, MSG_MISSING_CHANNEL);
+            callback(false, MSG_MISSING_CHANNEL);
+            return false;
         } else if (topic.length > 50 || !/^([a-zA-Z0-9_]*)$/.test(topic)) {
             __error(MSG_ERROR_CHANNEL);
-            return callback(false, MSG_ERROR_CHANNEL);
+            callback(false, MSG_ERROR_CHANNEL);
+            return false;
         }
         return true;
     };
@@ -726,10 +728,12 @@ var Yunba = (function () {
     Yunba.prototype._validate_alias = function (alias, callback) {
         if (!alias) {
             __error(MSG_MISSING_ALIAS);
-            return callback(false, MSG_MISSING_ALIAS);
+            callback(false, MSG_MISSING_ALIAS);
+            return false;
         } else if (alias.length > 50 || !/^([a-zA-Z0-9_]*)$/.test(alias)) {
             __error(MSG_ERROR_ALIAS);
-            return callback(false, MSG_ERROR_ALIAS);
+            callback(false, MSG_ERROR_ALIAS);
+            return false;
         }
         return true;
     };
@@ -737,7 +741,8 @@ var Yunba = (function () {
     Yunba.prototype._validate_message = function (message, callback) {
         if (!message) {
             __error(MSG_MISSING_MESSAGE);
-            return callback(false, MSG_MISSING_MESSAGE);
+            callback(false, MSG_MISSING_MESSAGE);
+            return false;
         }
         return true;
     };
