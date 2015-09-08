@@ -1,132 +1,129 @@
-var Yunba;
-var DEF_SERVER = 'sock.yunba.io';
-var DEF_PORT = 3000;
-var QOS0 = 0;
-var QOS1 = 1;
-var QOS2 = 2;
-var MSG_MISSING_MESSAGE = 'Missing Message';
-var MSG_MISSING_CHANNEL = 'Missing Channel';
-var MSG_ERROR_CHANNEL = 'Topic 只支持英文数字下划线，长度不超过50个字符。';
-var MSG_MISSING_ALIAS = 'Missing Alias';
-var MSG_ERROR_ALIAS = 'Alias 只支持英文数字下划线，长度不超过50个字符。';
-var MSG_SUB_FAIL = '订阅失败';
-var MSG_MISSING_CALLBACK = 'Missing Callback';
-var MSG_SUB_REPEAT_ERROR = '不能重复订阅一个频道';
-var MSG_UNSUB_FAIL = '取消订阅操作失败';
-var MSG_CONNECT_FAIL = '连接 Yunba 服务失败';
-var MSG_DISCONNECT_FAIL = '关闭连接失败';
-var MSG_NO_THIS_CHANNEL = '未订阅该频道';
-var MSG_PUB_FAIL = '信息发布失败';
-var MSG_NEED_CONNECT = '请先连接到 Yunba 服务';
-var MSG_NEED_SOCKET_CONNECT = 'JavaScript SDK 与消息服务器已经断开链接，请刷新页面重新链接。';
-var MSG_SESSION_IN_USE = 'the session id is in use';
+var Yunba = (function () {
+    var DEF_SERVER = 'sock.yunba.io';
+    var DEF_PORT = 3000;
+    var QOS0 = 0;
+    var QOS1 = 1;
+    var QOS2 = 2;
+    var MSG_MISSING_MESSAGE = 'Missing Message';
+    var MSG_MISSING_CHANNEL = 'Missing Channel';
+    var MSG_ERROR_CHANNEL = 'Topic 只支持英文数字下划线，长度不超过50个字符。';
+    var MSG_MISSING_ALIAS = 'Missing Alias';
+    var MSG_ERROR_ALIAS = 'Alias 只支持英文数字下划线，长度不超过50个字符。';
+    var MSG_SUB_FAIL = '订阅失败';
+    var MSG_MISSING_CALLBACK = 'Missing Callback';
+    var MSG_SUB_REPEAT_ERROR = '不能重复订阅一个频道';
+    var MSG_UNSUB_FAIL = '取消订阅操作失败';
+    var MSG_CONNECT_FAIL = '连接 Yunba 服务失败';
+    var MSG_DISCONNECT_FAIL = '关闭连接失败';
+    var MSG_NO_THIS_CHANNEL = '未订阅该频道';
+    var MSG_PUB_FAIL = '信息发布失败';
+    var MSG_NEED_CONNECT = '请先连接到 Yunba 服务';
+    var MSG_NEED_SOCKET_CONNECT = 'JavaScript SDK 与消息服务器已经断开链接，请刷新页面重新链接。';
+    var MSG_SESSION_IN_USE = 'the session id is in use';
 
-var __error = function (msg) {
-    __log(msg);
-    return false;
-};
+    var __error = function (msg) {
+        __log(msg);
+        return false;
+    };
 
-var __log = function (msg) {
-    if (typeof console != "undefined" && typeof console.log != "undefined") {
-        console.log(msg);
-    }
-};
-
-var __MessageIdUtil = {
-    get: function () {
-        var randomness = Math.round(Math.random() * 1e16) % Math.pow(2, 23);
-
-        if (randomness.toString(2).length > 23) {
-            randomness = (randomness >>> (randomness.toString(2).length - 23)).toString(2);
-        } else {
-            randomness = (randomness << (23 - randomness.toString(2).length)).toString(2);
+    var __log = function (msg) {
+        if (typeof console != "undefined" && typeof console.log != "undefined") {
+            console.log(msg);
         }
+    };
 
-        var timestamp = (new Date().getTime()).toString(2);
+    var __MessageIdUtil = {
+        get: function () {
+            var randomness = Math.round(Math.random() * 1e16) % Math.pow(2, 23);
 
-        return parseInt(timestamp, 2).toString() + parseInt(randomness, 2).toString();
-    }
-};
-
-var __CookieUtil = {
-    get: function (name) {
-        var cookieName = encodeURIComponent(name) + "=",
-            cookieStart = document.cookie.indexOf(cookieName),
-            cookieValue = null;
-
-        if (cookieStart > -1) {
-            var cookieEnd = document.cookie.indexOf(';', cookieStart);
-            if (cookieEnd == -1) {
-                cookieEnd = document.cookie.length;
+            if (randomness.toString(2).length > 23) {
+                randomness = (randomness >>> (randomness.toString(2).length - 23)).toString(2);
+            } else {
+                randomness = (randomness << (23 - randomness.toString(2).length)).toString(2);
             }
-            cookieValue = decodeURIComponent(document.cookie.substring(cookieStart + cookieName.length, cookieEnd));
+
+            var timestamp = (new Date().getTime()).toString(2);
+
+            return parseInt(timestamp, 2).toString() + parseInt(randomness, 2).toString();
         }
-        return cookieValue;
-    },
+    };
 
-    set: function (name, value, expires, path, domain, secure) {
-        var cookieText = encodeURIComponent(name) + '=' + encodeURIComponent(value);
+    var __CookieUtil = {
+        get: function (name) {
+            var cookieName = encodeURIComponent(name) + "=",
+                cookieStart = document.cookie.indexOf(cookieName),
+                cookieValue = null;
 
-        if (expires instanceof Date) {
-            cookieText += "; expires=" + expires.toGMTString();
+            if (cookieStart > -1) {
+                var cookieEnd = document.cookie.indexOf(';', cookieStart);
+                if (cookieEnd == -1) {
+                    cookieEnd = document.cookie.length;
+                }
+                cookieValue = decodeURIComponent(document.cookie.substring(cookieStart + cookieName.length, cookieEnd));
+            }
+            return cookieValue;
+        },
+
+        set: function (name, value, expires, path, domain, secure) {
+            var cookieText = encodeURIComponent(name) + '=' + encodeURIComponent(value);
+
+            if (expires instanceof Date) {
+                cookieText += "; expires=" + expires.toGMTString();
+            }
+
+            if (path) {
+                cookieText += "; path=" + path;
+            }
+
+            if (domain) {
+                cookieText += "; domain=" + domain;
+            }
+
+            if (secure) {
+                cookieText += "; secure";
+            }
+
+            document.cookie = cookieText;
+        },
+
+        unset: function (name, path, domain, secure) {
+            this.set(name, '', new Date(0), path, domain, secure);
+        },
+
+        isSupport: function () {
+            var isSupport = false;
+            if (typeof(navigator.cookieEnabled) != 'undefined') {
+                isSupport = navigator.cookieEnabled;
+            } else {
+                this.set('yunbaTestCookie', 'yunbaTestCookie');
+                isSupport = this.get('yunbaTestCookie') ? true : false;
+            }
+            return isSupport;
         }
+    };
 
-        if (path) {
-            cookieText += "; path=" + path;
+    Array.prototype.contain = function (val) {
+        for (var i = 0; i < this.length; i++) {
+            if (this[i] == val) {
+                return true;
+            }
         }
+        return false;
+    };
 
-        if (domain) {
-            cookieText += "; domain=" + domain;
+    Array.prototype.indexOf = function (val) {
+        for (var i = 0; i < this.length; i++) {
+            if (this[i] == val) return i;
         }
+        return -1;
+    };
 
-        if (secure) {
-            cookieText += "; secure";
+    Array.prototype.remove = function (val) {
+        var index = this.indexOf(val);
+        if (index > -1) {
+            this.splice(index, 1);
         }
-
-        document.cookie = cookieText;
-    },
-
-    unset: function (name, path, domain, secure) {
-        this.set(name, '', new Date(0), path, domain, secure);
-    },
-
-    isSupport: function () {
-        var isSupport = false;
-        if (typeof(navigator.cookieEnabled) != 'undefined') {
-            isSupport = navigator.cookieEnabled;
-        } else {
-            this.set('yunbaTestCookie', 'yunbaTestCookie');
-            isSupport = this.get('yunbaTestCookie') ? true : false;
-        }
-        return isSupport;
-    }
-};
-
-Array.prototype.contain = function (val) {
-    for (var i = 0; i < this.length; i++) {
-        if (this[i] == val) {
-            return true;
-        }
-    }
-    return false;
-};
-
-Array.prototype.indexOf = function (val) {
-    for (var i = 0; i < this.length; i++) {
-        if (this[i] == val) return i;
-    }
-    return -1;
-};
-
-Array.prototype.remove = function (val) {
-    var index = this.indexOf(val);
-    if (index > -1) {
-        this.splice(index, 1);
-    }
-};
-
-Yunba = (function () {
-
+    };
     function Yunba(setup) {
         setup = setup || {};
         this.server = setup['server'] || DEF_SERVER;
