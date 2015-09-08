@@ -747,16 +747,6 @@ var Yunba = (function () {
         return true;
     };
 
-    Yunba.prototype._update_query_string = function (new_query_string) {
-        var href = location.href;
-        var rurl = (href.indexOf('?') ? href.substr(0, href.indexOf('?')) : href) + new_query_string;
-        if (history && typeof history.replaceState === "function") {
-            history.replaceState(null, null, rurl);
-        } else {
-            location.href = rurl;
-        }
-    };
-
     return Yunba;
 
 })();
