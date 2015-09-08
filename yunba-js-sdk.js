@@ -344,7 +344,8 @@ var Yunba = (function () {
                         socketio_connect();
                     }, 1000);
                 } else {
-                    return __error(MSG_CONNECT_FAIL) && init_callback(false, MSG_CONNECT_FAIL);
+                    __error(MSG_CONNECT_FAIL);
+                    return init_callback(false, MSG_CONNECT_FAIL);
                 }
             }
         };
@@ -373,7 +374,8 @@ var Yunba = (function () {
             }
 
         } catch (err) {
-            return __error(err) && callback(false, err);
+            __error(err);
+            return callback(false, err);
         }
     };
 
@@ -386,7 +388,8 @@ var Yunba = (function () {
         try {
             this.socket.emit('connect_v2', {appkey: this.appkey, customid: customid});
         } catch (err) {
-            return __error(err) && callback(false, err);
+            __error(err);
+            return callback(false, err);
         }
     };
 
@@ -401,7 +404,8 @@ var Yunba = (function () {
             self.connected = false;
             callback && callback(true);
         } catch (err) {
-            return __error(err) && callback(false, err);
+            __error(err);
+            return callback(false, err);
         }
     };
 
@@ -422,7 +426,8 @@ var Yunba = (function () {
             };
 
         if (!this.connected) {
-            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+            __error(MSG_NEED_CONNECT);
+            return callback(false, MSG_NEED_CONNECT);
         }
 
         if (!this._validate_topic(topic, callback)) {
@@ -432,7 +437,8 @@ var Yunba = (function () {
         try {
             this.socket.emit('subscribe', {'topic': topic, 'qos': qos, 'messageId': msgId});
         } catch (err) {
-            return __error(err) && callback(false, err);
+            __error(err);
+            return callback(false, err);
         }
     };
 
@@ -449,7 +455,8 @@ var Yunba = (function () {
             };
 
         if (!this.connected) {
-            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+            __error(MSG_NEED_CONNECT);
+            return callback(false, MSG_NEED_CONNECT);
         }
 
         if (!this._validate_topic(topic, callback)) {
@@ -459,7 +466,8 @@ var Yunba = (function () {
         try {
             this.socket.emit('subscribe', {'topic': topic + '/p', 'qos': qos, 'messageId': msgId});
         } catch (err) {
-            return __error(err) && callback(false, err);
+            __error(err);
+            return callback(false, err);
         }
     };
 
@@ -470,7 +478,8 @@ var Yunba = (function () {
         }
 
         if (!this.connected) {
-            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+            __error(MSG_NEED_CONNECT);
+            return callback(false, MSG_NEED_CONNECT);
         }
 
         var topic = args['topic'];
@@ -485,7 +494,8 @@ var Yunba = (function () {
         try {
             this.socket.emit('unsubscribe', {'topic': topic, 'messageId': msgId});
         } catch (err) {
-            return __error(err) && callback(false, err);
+            __error(err);
+            return callback(false, err);
         }
     };
 
@@ -496,7 +506,8 @@ var Yunba = (function () {
         }
 
         if (!this.connected) {
-            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+            __error(MSG_NEED_CONNECT)
+            return callback(false, MSG_NEED_CONNECT);
         }
 
         var topic = args['topic'];
@@ -511,7 +522,8 @@ var Yunba = (function () {
         try {
             this.socket.emit('unsubscribe', {'topic': topic + '/p', 'messageId': msgId});
         } catch (err) {
-            return __error(err) && callback(false, err);
+            __error(err);
+            return callback(false, err);
         }
     };
 
@@ -522,7 +534,8 @@ var Yunba = (function () {
         }
 
         if (!this.connected) {
-            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+            __error(MSG_NEED_CONNECT);
+            return callback(false, MSG_NEED_CONNECT);
         }
 
         var topic = args['topic'] || args['channel'];
@@ -544,7 +557,8 @@ var Yunba = (function () {
         try {
             this.socket.emit('publish', {'topic': topic, 'msg': msg, 'qos': qos, 'messageId': msgId});
         } catch (err) {
-            return __error(err) && callback(false, err);
+            __error(err);
+            return callback(false, err);
         }
     };
 
@@ -555,7 +569,8 @@ var Yunba = (function () {
         }
 
         if (!this.connected) {
-            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+            __error(MSG_NEED_CONNECT);
+            return callback(false, MSG_NEED_CONNECT);
         }
 
         var topic = args['topic'] || args['channel'];
@@ -579,7 +594,8 @@ var Yunba = (function () {
         try {
             this.socket.emit('publish2', {'topic': topic, 'msg': msg, 'opts': opts});
         } catch (err) {
-            return __error(err) && callback(false, err);
+            __error(err);
+            return callback(false, err);
         }
     };
 
@@ -590,7 +606,8 @@ var Yunba = (function () {
         }
 
         if (!this.connected) {
-            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+            __error(MSG_NEED_CONNECT);
+            return callback(false, MSG_NEED_CONNECT);
         }
 
         var alias = args['alias'];
@@ -610,7 +627,8 @@ var Yunba = (function () {
         try {
             this.socket.emit('publish_to_alias', {'alias': alias, 'msg': msg, 'messageId': messageId});
         } catch (err) {
-            return __error(err) && callback(false, err);
+            __error(err);
+            return callback(false, err);
         }
     };
 
@@ -621,7 +639,8 @@ var Yunba = (function () {
         }
 
         if (!this.connected) {
-            return __error(MSG_NEED_CONNECT) && callback(false, MSG_NEED_CONNECT);
+            __error(MSG_NEED_CONNECT);
+            return callback(false, MSG_NEED_CONNECT);
         }
 
         var alias = args['alias'];
@@ -644,7 +663,8 @@ var Yunba = (function () {
         try {
             this.socket.emit('publish2_to_alias', {'alias': alias, 'msg': msg, 'opts': opts});
         } catch (err) {
-            return __error(err) && callback(false, err);
+            __error(err);
+            return callback(false, err);
         }
     };
 
@@ -694,25 +714,30 @@ var Yunba = (function () {
 
     Yunba.prototype._validate_topic = function (topic, callback) {
         if (!topic) {
-            return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
+            __error(MSG_MISSING_CHANNEL);
+            return callback(false, MSG_MISSING_CHANNEL);
         } else if (topic.length > 50 || !/^([a-zA-Z0-9_]*)$/.test(topic)) {
-            return __error(MSG_ERROR_CHANNEL) && callback(false, MSG_ERROR_CHANNEL);
+            __error(MSG_ERROR_CHANNEL);
+            return callback(false, MSG_ERROR_CHANNEL);
         }
         return true;
     };
 
     Yunba.prototype._validate_alias = function (alias, callback) {
         if (!alias) {
-            return __error(MSG_MISSING_ALIAS) && callback(false, MSG_MISSING_ALIAS);
+            __error(MSG_MISSING_ALIAS);
+            return callback(false, MSG_MISSING_ALIAS);
         } else if (alias.length > 50 || !/^([a-zA-Z0-9_]*)$/.test(alias)) {
-            return __error(MSG_ERROR_ALIAS) && callback(false, MSG_ERROR_ALIAS);
+            __error(MSG_ERROR_ALIAS);
+            return callback(false, MSG_ERROR_ALIAS);
         }
         return true;
     };
 
     Yunba.prototype._validate_message = function (message, callback) {
         if (!message) {
-            return __error(MSG_MISSING_MESSAGE) && callback(false, MSG_MISSING_MESSAGE);
+            __error(MSG_MISSING_MESSAGE);
+            return callback(false, MSG_MISSING_MESSAGE);
         }
         return true;
     };
