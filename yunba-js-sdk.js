@@ -4,6 +4,7 @@ var DEF_PORT = 3000;
 var QOS0 = 0;
 var QOS1 = 1;
 var QOS2 = 2;
+var MSG_MISSING_APPKEY = 'appkey不能为空';
 var MSG_MISSING_MESSAGE = 'Missing Message';
 var MSG_MISSING_CHANNEL = 'Missing Channel';
 var MSG_ERROR_CHANNEL = 'Topic 只支持英文数字下划线，长度不超过50个字符。';
@@ -133,7 +134,7 @@ Yunba = (function () {
         this.port = setup['port'] || DEF_PORT;
         this.auto_reconnect = setup['auto_reconnect'] || false;
         if (!setup['appkey']) {
-            return false;
+            throw new Error(MSG_MISSING_APPKEY);
         } else {
             this.appkey = setup['appkey'];
         }
