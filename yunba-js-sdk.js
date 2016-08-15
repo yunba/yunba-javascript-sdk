@@ -130,6 +130,7 @@ Yunba = (function () {
 
     function Yunba(setup) {
         setup = setup || {};
+        this.secure = setup['secure'] === undefined ? false : setup['secure'];
         this.server = setup['server'] || DEF_SERVER;
         this.port = setup['port'] || DEF_PORT;
         this.auto_reconnect = setup['auto_reconnect'] || false;
@@ -172,7 +173,7 @@ Yunba = (function () {
         var socketio_connect = function () {
             try {
                 __log('js client start init...');
-                me.socket = io.connect('http://' + me.server + ':' + me.port, {'force new connection': true});
+                me.socket = io.connect(me.server + ':' + me.port, {'force new connection': true, 'secure': me.secure});
                 me.socket.on('connect', function () {
                     __log('js client init success.');
                     me.socket_connected = true;
