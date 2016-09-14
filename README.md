@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/yunba/yunba-javascript-sdk.png?branch=travis)](http://travis-ci.org/yunba/yunba-javascript-sdk)
+[![Coverage Status](https://coveralls.io/repos/yunba/yunba-javascript-sdk/badge.svg?branch=master&service=github)](https://coveralls.io/github/yunba/yunba-javascript-sdk?branch=master)
+
 # Yunba JavaScript SDK over Socket.IO
 
 文档 
@@ -67,7 +70,7 @@ IE7 以下版本会报错对象不支持 "stringify" 属性或方法，在导入
 <![endif]-->
 ```
 
-# 试用例子
+## 试用例子
 
 examples/yunba_javascript_demo_customid.html 演示了如何使用 Yunba JavaScript SDK。试用前先确保 Appkey 正确：
 
@@ -78,4 +81,10 @@ examples/yunba_javascript_demo_customid.html 演示了如何使用 Yunba JavaScr
 ** 替换为您的 Appkey **
 
 然后用浏览器打开即可。
+
+## Test  
+```
+npm install
+npm run test
+```
 
