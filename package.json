@@ -1,0 +1,32 @@
+{
+  "name": "yunba-javascript-sdk",
+  "version": "2.0.3",
+  "description": "javascript sdk for yunba.io services",
+  "main": "yunba-js-sdk.js",
+  "directories": {
+    "example": "examples",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "istanbul cover _mocha -- -R spec -t 60000 test/2.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yunba/yunba-javascript-sdk"
+  },
+  "keywords": [
+    "yunba",
+    "javascript",
+    "sdk"
+  ],
+  "bugs": {
+    "url": "https://github.com/yunba/yunba-javascript-sdk/issues"
+  },
+  "homepage": "https://github.com/yunba/yunba-javascript-sdk",
+  "devDependencies": {
+    "chai": "~3.5.0",
+    "mocha": "~3.0.2",
+    "istanbul": "~0.4.5",
+    "socket.io-client": "~0.9.16"
+  }
+}

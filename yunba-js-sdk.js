@@ -1,3 +1,20 @@
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(['socket.io-client'], function (io) {
+            return (root.returnExportsGlobal = factory(io));
+        });
+    } else if (typeof module === 'object' && module.exports) {
+        // Node. Does not work with strict CommonJS, but
+        // only CommonJS-like enviroments that support module.exports,
+        // like Node.
+        module.exports = factory(require('socket.io-client'));
+    } else {
+        // Browser globals
+        root.Yunba = factory(root.io);
+    }
+}(this, function(io) {
+
 var Yunba;
 var DEF_SERVER = 'sock.yunba.io';
 var DEF_PORT = 3000;
@@ -49,6 +66,7 @@ var __MessageIdUtil = {
     }
 };
 
+var isBrowser = typeof window === 'object' && window.window === window;
 var __CookieUtil = {
     get: function (name) {
         var cookieName = encodeURIComponent(name) + "=",
@@ -92,6 +110,9 @@ var __CookieUtil = {
     },
 
     isSupport: function () {
+        if (!isBrowser) {
+            return false;
+        }
         var isSupport = false;
         if (typeof(navigator.cookieEnabled) != 'undefined') {
             isSupport = navigator.cookieEnabled;
@@ -103,30 +124,8 @@ var __CookieUtil = {
     }
 };
 
-Array.prototype.contain = function (val) {
-    for (var i = 0; i < this.length; i++) {
-        if (this[i] == val) {
-            return true;
-        }
-    }
-    return false;
-};
 
-Array.prototype.indexOf = function (val) {
-    for (var i = 0; i < this.length; i++) {
-        if (this[i] == val) return i;
-    }
-    return -1;
-};
 
-Array.prototype.remove = function (val) {
-    var index = this.indexOf(val);
-    if (index > -1) {
-        this.splice(index, 1);
-    }
-};
-
-Yunba = (function () {
 
     function Yunba(setup) {
         setup = setup || {};
@@ -374,7 +373,7 @@ Yunba = (function () {
                 this.socket.emit('connect_v2', {appkey: this.appkey, customid: customid});
 
             } else {
-                this.socket.emit('connect_v2', {appkey: this.appkey});
+                this.socket.emit('connect', {appkey: this.appkey});
             }
 
         } catch (err) {
@@ -734,4 +733,7 @@ Yunba = (function () {
 
     return Yunba;
 
-})();
+
+
+    
+}));
