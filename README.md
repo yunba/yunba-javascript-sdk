@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/yunba/yunba-javascript-sdk.png?branch=travis)](http://travis-ci.org/yunba/yunba-javascript-sdk)
+[![Build Status](https://travis-ci.org/yunba/yunba-javascript-sdk.png?branch=master)](http://travis-ci.org/yunba/yunba-javascript-sdk)
 [![Coverage Status](https://coveralls.io/repos/yunba/yunba-javascript-sdk/badge.svg?branch=master&service=github)](https://coveralls.io/github/yunba/yunba-javascript-sdk?branch=master)
 
 # Yunba JavaScript SDK over Socket.IO
