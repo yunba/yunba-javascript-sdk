@@ -69,7 +69,7 @@
       var topic = $('#topic_sub').val();
       yunba.subscribe({'topic': topic }, function (success, msg) {
         if (success) {
-          $('#topic_list').append('<b id="topic_id_' + topic + '">' + topic + '</b>');
+          $('#topic_list').append('<b data-topic="topic_id_' + topic + '">' + topic + '</b>');
         } else {
           alert(msg);
         }
@@ -84,7 +84,7 @@
         var topic = $('#topic_sub').val();
         yunba.subscribe_presence({'topic': topic }, function (success, msg) {
             if (success) {
-                $('#topic_list').append('<b id="topic_id_' + topic + '/p' + '">' + topic + '/p' + '</b>');
+                $('#topic_list').append('<b data-topic="topic_id_' + topic + '/p' + '">' + topic + '/p' + '</b>');
             } else {
                 alert(msg);
             }
@@ -101,7 +101,7 @@
 
       yunba.unsubscribe({'topic': topic}, function (success, data) {
         if (success) {
-          $('#topic_id_' + topic).remove();
+          $('#topic_list b').filter('[data-topic="' + 'topic_id_' + topic + '"]').remove();
         } else {
           alert(data);
         }
@@ -118,7 +118,7 @@
 
         yunba.unsubscribe_presence({'topic': topic}, function (success, data) {
             if (success) {
-                $('#topic_id_' + topic + '/p').remove();
+                $('#topic_list b').filter('[data-topic="' + 'topic_id_' + topic + '/p' + '"]').remove();
             } else {
                 alert(data);
             }
