@@ -699,7 +699,7 @@ var __CookieUtil = {
     Yunba.prototype._validate_topic = function (topic, callback) {
         if (!topic) {
             return __error(MSG_MISSING_CHANNEL) && callback(false, MSG_MISSING_CHANNEL);
-        } else if (topic.length > 50 || !/^([a-zA-Z0-9_\/#\+]*)$/.test(topic)) {
+        } else if (topic.length > 128 || !/^([a-zA-Z0-9_\/#\+]*)$/.test(topic)) {
             return __error(MSG_ERROR_CHANNEL) && callback(false, MSG_ERROR_CHANNEL);
         }
         return true;
