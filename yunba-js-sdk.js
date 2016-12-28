@@ -125,7 +125,7 @@ var __CookieUtil = {
 };
 
 if (isBrowser) {
-    if (location.protocol !== 'https:') {
+    if (location.protocol == 'https:') {
         DEF_SERVER = 'https://sock.yunba.io';
         DEF_PORT = 443;
     }
