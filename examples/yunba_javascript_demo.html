@@ -26,14 +26,13 @@
     });
 
     yunba.set_message_cb (function (data) {
-        $('#msg_end').before('来自频道：' + data.topic);
-        $('#msg_end').before('&nbsp;&nbsp;&nbsp;消息内容：' + data.msg);
-        $('#msg_end').before("\<br\/\>");
-
+        var $msg = $('<p />');
+        $msg.html('来自频道：' + data.topic + '&nbsp;&nbsp;&nbsp;消息内容：' + data.msg);
         if (data.presence) {
             console.log(data.presence);
         }
-        msg_end.scrollIntoView();
+        $('#msg_list').append($msg);
+        ($msg.prev() || $msg)[0].scrollIntoView();
     });
 
     function mqtt_connect() {
