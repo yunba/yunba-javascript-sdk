@@ -7,6 +7,33 @@
   <script type="text/javascript" src="javascripts/json2.js"></script>
   <![endif]-->
   <script type="text/javascript" src="javascripts/socket.io-1.3.5.min.js"></script>
+  <script type="text/javascript">
+    // hack
+    var subscribedTopics = window.subscribedTopics = [];
+    var originEmit = io.Socket.prototype.emit;
+    io.Socket.prototype.emit = function(ev, data) {
+      if (ev == 'subscribe') {
+        subscribedTopics.push(data.topic);
+      }
+      return originEmit.apply(this, arguments);
+    }
+    window.onbeforeunload = function(e) {
+      try {
+        var topic;
+        for(var i = 0, length = subscribedTopics.length; i < length; i++) {
+          topic = subscribedTopics[i];
+          if(topic.substr(-2) === '/p') {
+            yunba.unsubscribe_presence({topic: topic.substr(0, topic.length-2)});
+          } else {
+            yunba.unsubscribe({topic: topic});
+          }
+        }
+      }catch(e){}
+      var now = +new Date();
+      while((+new Date()) - now < 200){};
+    };
+  </script>
+
   <script type="text/javascript" src="../yunba-js-sdk.js"></script>
   <script type="text/javascript" src="javascripts/jquery-1.10.2.min.js"></script>
   <script>
@@ -26,10 +53,13 @@
     });
 
     yunba.set_message_cb (function (data) {
-        $('#msg_end').before('来自频道：' + data.topic);
-        $('#msg_end').before('&nbsp;&nbsp;&nbsp;消息内容：' + data.msg);
-        $('#msg_end').before("\<br\/\>");
-        msg_end.scrollIntoView();
+        var $msg = $('<p />');
+        $msg.html('来自频道：' + data.topic + '&nbsp;&nbsp;&nbsp;消息内容：' + data.msg);
+        if (data.presence) {
+            console.log(data.presence);
+        }
+        $('#msg_list').append($msg);
+        ($msg.prev() || $msg)[0].scrollIntoView();
     });
 
     function mqtt_connect() {
