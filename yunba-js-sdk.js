@@ -16,7 +16,7 @@
 }(this, function(io) {
 
 var Yunba;
-var DEF_SERVER = 'sock.yunba.io';
+var DEF_SERVER = 'http://sock.yunba.io';
 var DEF_PORT = 3000;
 var QOS0 = 0;
 var QOS1 = 1;
