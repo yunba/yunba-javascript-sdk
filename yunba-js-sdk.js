@@ -84,6 +84,8 @@ var __CookieUtil = {
     },
 
     set: function (name, value, expires, path, domain, secure) {
+        path = path || '/';
+        
         var cookieText = encodeURIComponent(name) + '=' + encodeURIComponent(value);
 
         if (expires instanceof Date) {
