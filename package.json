@@ -8,7 +8,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "istanbul cover _mocha -- -R spec -t 60000 test/2.x"
+    "test": "istanbul cover _mocha -- -R spec -t 60000 test/3.x"
   },
   "repository": {
     "type": "git",

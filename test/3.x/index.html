@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+    <meta charset="utf-8">
+    <script type="text/javascript" src="https://cdn.bootcss.com/socket.io/1.3.5/socket.io.min.js"></script>
+    <script type="text/javascript" src="../../yunba-js-sdk-v3.js"></script>
+    <script type="text/javascript">
+        var topic = 'testTopic';
+        // 默认自动连接
+        var client = new Yunba({
+            url: 'http://sock.yunba.io:3000',
+            customId: 'test_user_id_2016',
+            appkey: '54d0c24252be1f7e1dd84c42',
+            logLevel: 'debug',
+            // 默认消息处理函数
+            // 如果 subscribe 等没有传入消息处理函数, 会默认使用这个函数
+            // messageHandler: function(data) { },
+
+            // mqtt 连接错误的时候被调用, 如 appkey 被限制
+            mqttConnectErrorHandler: function() {
+              console.log(arguments);
+            },
+          
+            // socketio 连接错误的时候被调用, 如地址或无网络
+            socketioConnectErrorHandler: function() {
+              console.log(arguments);
+            }
+
+        });
+
+        // 实例化后可直接调用, 无须等待
+        client.subscribe({
+            topic: 'topic',
+            // 这个频道的消息将由这个函数处理, 而不是上面的全局函数
+            messageHandler: function(data) {}
+        }, function(err, result) {
+            console.log(arguments);
+        });
+
+        client.publish({
+            msg: 'this a testing message',
+            topic: 'topic',
+            messageId: '14629351650436345636',
+            qos: 1
+        }, function(err, result) {
+            console.log(arguments);
+        });
+        
+
+
+        // client.setAlias('testClient', function() {
+        //     console.log(arguments);
+        // });
+        // client.getAlias(function() {
+        //     console.log(arguments);
+        // });
+        
+        // client.subscribe({topic: topic}, function(err) {
+        //     if (err) {
+        //         throw err;
+        //     }
+        //     var topicObject = client.topics[topic];
+        //     console.log(topicObject.messageHandlers.length);
+        //     client.unsubscribe({
+        //         topic: topic
+        //     }, function(err, result) {
+        //         console.log(topicObject.messageHandlers.length);
+        //     });
+        // });
+        client.getTopicList('', function(err ,result) {
+            if (result.success) {
+                result.data.topics.forEach(function(item) {
+                    client.unsubscribe({topic: item});
+                });
+            }
+        });
+    </script>
+</head>
+
+<body>
+
+</body>
+
+</html>

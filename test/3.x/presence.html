@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+    <meta charset="utf-8">
+    <script type="text/javascript">
+        window.DEBUG_YUNBA = true;
+    </script>
+    <script type="text/javascript" src="https://cdn.bootcss.com/socket.io/0.9.16/socket.io.min.js"></script>
+    <script type="text/javascript" src="../../yunba-js-sdk-v3.js"></script>
+    <script type="text/javascript">
+        var topic = 'client1topic';
+        var client1 = new Yunba({
+            url: 'http://sock.yunba.io:3000',
+            customId: 'test_user_id_2016_client1',
+            appkey: '54d0c24252be1f7e1dd84c42',
+            logLevel: 'debug',
+            
+        });
+        var client2 = new Yunba({
+            url: 'http://sock.yunba.io:3000',
+            customId: 'test_user_id_2016_client2',
+            appkey: '54d0c24252be1f7e1dd84c42',
+            logLevel: 'debug'
+        });
+        client1.subscribe('zoo', function(err, result) {
+            client1.setAlias('Bob5', function(err, result) {
+                client2.publish({
+                    alias: 'Bob5',
+                    msg: 'Hi Bob'
+                });
+            });
+        });
+
+    </script>
+</head>
+
+<body>
+
+</body>
+
+</html>

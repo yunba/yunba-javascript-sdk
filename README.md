@@ -1,6 +1,8 @@
 [![Build Status](https://travis-ci.org/yunba/yunba-javascript-sdk.png?branch=master)](http://travis-ci.org/yunba/yunba-javascript-sdk)
 [![Coverage Status](https://coveralls.io/repos/yunba/yunba-javascript-sdk/badge.svg?branch=master&service=github)](https://coveralls.io/github/yunba/yunba-javascript-sdk?branch=master)
 
+关于 v3-beta, 请看 [api-v3.md](api-v3.md)
+
 # Yunba JavaScript SDK over Socket.IO
 
 文档 
