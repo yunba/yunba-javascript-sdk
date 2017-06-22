@@ -5,23 +5,21 @@
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
         define(['socket.io-client'], function (io) {
-            return (root.returnExportsGlobal = factory(io));
+            return (root.Yunba = factory(io, root));
         });
     } else if (typeof module === 'object' && module.exports) {
         // Node. Does not work with strict CommonJS, but
         // only CommonJS-like enviroments that support module.exports,
         // like Node.
-        module.exports = factory(require('socket.io-client'));
+        module.exports = factory(require('socket.io-client'), root);
     } else {
         // Browser globals
-        root.Yunba = factory(root.io);
+        root.Yunba = factory(root.io, root);
     }
-}(this, function (io) {
+}(this, function (io, root) {
     if (typeof io === 'undefined') {
         throw new Error('socket.io should be loaded first');
     }
-
-    var root = this;
     var isBrowser = typeof window === 'object' && window.window === window;
     if ((isBrowser && location.href.indexOf('debug=sdk') > -1)
         || (typeof process === 'object' && process.env.DEBUG)) {
@@ -495,12 +493,13 @@
         },
 
         disconnect: function (cb) {
+            cb = cb || noop;
             var socketio = this.socketio;
             if (socketio && socketio.socket.connected) {
                 this.socketioDisconnectCallback = cb;
                 socketio.socket.disconnect();
             } else {
-                typeof cb === 'function' && cb(null);
+                cb(null);
             }
         },
 
@@ -519,6 +518,7 @@
          * @param {Function} cb   subscribe callback
          */
         subscribe: function(opts, cb) {
+            cb = cb || noop;
             var errMsg = this._validateTopic(opts.topic);
             if (errMsg) {
                 return cb(new Error(errMsg));
@@ -542,6 +542,7 @@
         },
 
         subscribePresence: function(opts, cb) {
+            cb = cb || noop;
             var errMsg = this._validateTopic(opts.topic);
             if (errMsg) {
                 return cb(new Error(errMsg));
@@ -557,6 +558,7 @@
         },
 
         unsubscribe: function(opts, cb) {
+            cb = cb || noop;
             var errMsg = this._validateTopic(opts.topic);
             if (errMsg) {
                 return cb(new Error(errMsg));
@@ -599,6 +601,7 @@
         },
 
         unsubscribePresence: function(opts, cb) {
+            cb = cb || noop;
             var errMsg = this._validateTopic(opts.topic);
             if (errMsg) {
                 return cb(new Error(errMsg));
@@ -614,6 +617,7 @@
         },
 
         publish: function(opts, cb) {
+            cb = cb || noop;
             var errMsg = this._validateTopic(opts.topic) || this._validateMessage(opts.msg);
             if (errMsg) {
                 return cb(new Error(errMsg));
@@ -621,6 +625,7 @@
             this._publish(opts, cb);
         },
         publishToAlias: function(opts, cb) {
+            cb = cb || noop;
             var errMsg = this._validateAlias(opts.alias);
             if (errMsg) {
                 return cb(new Error(errMsg));
@@ -628,6 +633,7 @@
             this._publish(opts, cb);
         },
         publish2: function(opts, cb) {
+            cb = cb || noop;
             var errMsg = this._validateTopic(opts.topic) || this._validateMessage(opts.msg);
             if (errMsg) {
                 return cb(new Error(errMsg));
@@ -635,6 +641,7 @@
             this._publish2(opts, cb);
         },
         publish2ToAlias: function(opts, cb) {
+            cb = cb || noop;
             var errMsg = this._validateAlias(opts.alias);
             if (errMsg) {
                 return cb(new Error(errMsg));
