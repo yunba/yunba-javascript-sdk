@@ -37,31 +37,59 @@
   <script type="text/javascript" src="../yunba-js-sdk.js"></script>
   <script type="text/javascript" src="javascripts/jquery-1.10.2.min.js"></script>
   <script>
-    var yunba = new Yunba({
+    function connect_socket(){
+    		var appkey='',
+    			server='',
+    			port='';
+    		appkey=$('#custom_appkey').val();
+    		server=$('#custom_sockServer').val();
+    		server=check_sockServer(server);
+    		console.log('appkey:',appkey,'sock-server:',server);
+    	    var yunba = window.yunba=new Yunba({
       // 替换为您的 appkey
-      appkey: '52fcc04c4dc903d66d6f8f92',
-      server: 'http://sock.yunba.io',
-      port: '3000'
-    });
-    yunba.init(function (success) {
-      if (success) {
-        $('#msg').html('<div style="color:green">已连接上 socket</div>');
-        $('#msg').append('<div style="color:green">SocketId: ' + yunba.socket.id) + '</div>';
+      		appkey: appkey!=''?appkey:'52fcc04c4dc903d66d6f8f92',
+      		server: server._server!=undefined?server._server:'http://sock.yunba.io',
+      		port: server._port!=undefined?server._port:'3000'
+    		});
+    		yunba.init(function (success) {
+      		if (success) {
+        			$('#msg').html('<div style="color:green">已连接上 socket</div>');
+        			$('#msg').append('<div style="color:green">SocketId: ' + yunba.socket.id) + '</div>';
+			
+				mqtt_connect();
+      		}
+    		});
 
-          mqtt_connect();
-      }
-    });
+    		yunba.set_message_cb (function (data) {
+        		var $msg = $('<p />');
+        		$msg.html('来自频道：' + data.topic + '&nbsp;&nbsp;&nbsp;消息内容：' + data.msg);
+        		if (data.presence) {
+            		console.log(data.presence);
+        		}
+        		$('#msg_list').append($msg);
+        		($msg.prev() || $msg)[0].scrollIntoView();
+    		});
 
-    yunba.set_message_cb (function (data) {
-        var $msg = $('<p />');
-        $msg.html('来自频道：' + data.topic + '&nbsp;&nbsp;&nbsp;消息内容：' + data.msg);
-        if (data.presence) {
-            console.log(data.presence);
+    }
+	function check_sockServer(url){
+		try{
+          var parse_url = /^(?:([A-Za-z]+):)?(\/{0,3})([0-9.\-A-Za-z]+)(?::(\d+))?(?:\/([^?#]*))?(?:\?([^#]*))?(?:#(.*))?$/;
+          var data = url,
+            result = parse_url.exec(url),
+            blanks = '',
+            fields = ['url', 'scheme', 'slash', 'host', 'port', 'path', 'query', 'hash'];
+          return {
+          	_server:result[fields.indexOf('scheme')]+':'+result[fields.indexOf('slash')]+result[fields.indexOf('host')],
+          	_port:result[fields.indexOf('port')]
+          };
+        }catch(err){
+          alert('使用默认Appkey和sockServer');
+          return {
+          	_server:undefined,
+          	_port:undefined
+          }
         }
-        $('#msg_list').append($msg);
-        ($msg.prev() || $msg)[0].scrollIntoView();
-    });
-
+	}
     function mqtt_connect() {
         var cid = $('#custom_id').val();
         var connected = function(success, msg, sessionid) {
@@ -403,10 +431,27 @@
 </head>
 <body>
   <p style="text-align: center;color: #ccc;font-size: 14px;padding: 0;margin: 0;">本 Demo 仅供演示，关闭界面时，会取消订阅在本次会话中订阅的所有 Topic。在您的实际开发中，可以根据需要，自行修改代码逻辑。</p>
+  <p style="text-align: center;color: #ccc;font-size: 14px;padding: 0;margin: 0;">如果没有注册云巴用户，可以使用云巴提供的临时Appkey：<b style="color: #008000;">52fcc04c4dc903d66d6f8f92</b></p>
+  <p style="text-align: center;color: #ccc;font-size: 14px;padding: 0;margin: 0;">云巴临时sock Server：<span style="color: #008000;">http://sock.yunba.io:3000</span>&nbsp;如果需要生产使用，请联系：<a href="https://yunba.io/contact/">云巴商务</a></p>
+
+
 <div style="float:left;width:50%">
+  <fieldset style="height:100px;padding-top:20px;">
+    <legend>设置Appkey</legend>
+    请输入Appkey：<input type="text" id='custom_appkey' placeholder="请输入Appkey" style="width:50%"/>
+  </fieldset>
+</div>
+<div style="float:left;width:50%">
+  <fieldset style="height:100px;padding-top:20px;">
+    <legend>设置sock Server</legend>
+    请输入sock Server：<input type="text" id='custom_sockServer' placeholder="请输入sockServer" style="width:50%"/>
+  </fieldset>
+</div>
+<div style="float:left;width:50%;position: relative;">
   <fieldset style="height:100px;">
     <legend>WebSocket Info</legend>
     <div id="msg"></div>
+    <input type="button" id="connect_socket" value="connect socket" onclick="connect_socket();" style="position: absolute;bottom: 20px;right: 20px;"/>
   </fieldset>
 </div>
 <div style="float:left;width:50%">
